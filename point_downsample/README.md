@@ -18,7 +18,7 @@ ROS Output Topics
 
 ROS Services Provided
 ---
-* /point_downsample/refresh_settings
+* /point_downsample/refresh_params
 * /point_downsample/set_position
 * /point_downsample/set_orientation
 
