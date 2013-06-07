@@ -3,6 +3,7 @@ Hacking
 To hack on waas you will need:
 * [Ubunut 13.04](http://www.ubuntu.com/)
 * [ROS Groovy](http://www.ros.org/wiki/ROS/Installation)
+  * Install PCL 1.6 using work around instructions below
 * [Qt5](http://qt-project.org/wiki/Qt_5.0) via the [Ubuntu SDK](http://developer.ubuntu.com/get-started/) install directions
 * [OLA 0.8.28](http://code.google.com/p/open-lighting/downloads/detail?name=ola-0.8.28.tar.gz&can=2&q=) built from source
 
@@ -34,13 +35,12 @@ Todo
   * Research rviz Qt widget
   * animation visualization
   * Rviz plugin vs. standalone Qt application
-
 * Performance tuning
   * End-to-end latency?
   * Network traffic if distributed?
 * System image
   * Ubuntu 12.10 vs. 13.04?
-  * ROS with patches
+  * ROS with source build PCL1.6, see work arounds section
   * OLA compiled with http, c++ client lib, and e1.31 support
     * E1.31 configuration file
   * Qt5
@@ -50,5 +50,5 @@ Problems and Work Arounds
 ---
 
 ###point_downsample crashes with "Illegal Instruction" in VoxelFilter::applyFilter()###
-* Install PCL from source using instructions found on ansers.ros.org [1]
+* Install PCL from source using instructions found on [answers.ros.org] [1]
   [1]: http://answers.ros.org/question/62979/how-do-i-use-pcl-17-with-groovy/
