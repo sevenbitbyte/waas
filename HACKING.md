@@ -27,6 +27,11 @@ Todo
 * Implement animation_host
   * Leverage Qt animation framework + Python bindings for Qt and ROS
   * Develop status message
+  * Implement animations
+    * Star field, as described in grant proposal
+    * Pong
+    * Height map
+    * etc...
 * Implement ola_dmx_driver
   * Identify communication datatypes
   * Develop status message
