@@ -1,12 +1,12 @@
 Hacking
 ===
 To hack on waas you will need:
-* [Ubunut 13.04](http://www.ubuntu.com/)
+* [Ubunut 12.10 or 13.04](http://www.ubuntu.com/)
 * [ROS Groovy](http://www.ros.org/wiki/ROS/Installation)
   * Install PCL 1.6 using work around instructions below
 * [Qt5](http://qt-project.org/wiki/Qt_5.0) via the [Ubuntu SDK](http://developer.ubuntu.com/get-started/) install directions
 * [OLA 0.8.28](http://code.google.com/p/open-lighting/downloads/detail?name=ola-0.8.28.tar.gz&can=2&q=) built from source
-  * [protobuf 2.5 w/headers](https://code.google.com/p/protobuf/downloads/detail?name=protobuf-2.5.0.tar.gz&can=2&q=)
+  * [protobuf 2.3 w/headers](https://code.google.com/p/protobuf/downloads/detail?name=protobuf-2.3.0.tar.gz&can=2&q=)
 
 Progress
 ---
