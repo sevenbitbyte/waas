@@ -34,21 +34,37 @@
 #include <pcl-1.6/pcl/kdtree/kdtree.h>
 #include <pcl-1.6/pcl/segmentation/extract_clusters.h>
 
+#include "point_downsample/RefreshParams.h"
+#include "point_downsample/SetPosition.h"
+#include "point_downsample/SetOrientation.h"
+
+ros::NodeHandlePtr _nhPtr;
 
 ros::Publisher _pointsPub;
 ros::Publisher _groundImuPub;
 ros::Subscriber _kinectImuSub;
 ros::Subscriber _pointCloudSub;
 
-ros::NodeHandlePtr _nhPtr;
+ros::ServiceServer _refreshParamServ;
+ros::ServiceServer _positionmServ;
+ros::ServiceServer _orientationmServ;
+
 tf::TransformBroadcaster* _tfBroadcaster = NULL;
 tf::TransformListener* _tfListener = NULL;
 
 geometry_msgs::Point _kinectPosition;
+geometry_msgs::Quaternion _kinectOrientation;
 
-//Function Prototypes
+using namespace point_downsample;
+
+/*Function Prototypes*/
+//Subscriber callbacks
 void imuCallback(const sensor_msgs::Imu::ConstPtr& imuMsg);
 void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input);
+
+//Service callbackes
+bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response);
+
 
 int main(int argc, char** argv){
     ros::init (argc, argv, "point_downsample");
@@ -63,6 +79,8 @@ int main(int argc, char** argv){
 
     _pointsPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/points", 1);
     _groundImuPub = _nhPtr->advertise<sensor_msgs::Imu> ("/point_downsample/ground_imu", 1);
+
+    _refreshParamServ = _nhPtr->advertiseService("refresh_params", refreshParams);
 
     ros::spin();
 }
@@ -106,4 +124,11 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     }
 
     _pointsPub.publish(cloud);
+}
+
+
+bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response){
+	//TODO
+
+	return false;
 }
