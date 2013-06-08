@@ -47,7 +47,7 @@ ros::Subscriber _pointCloudSub;
 
 ros::ServiceServer _refreshParamServ;
 ros::ServiceServer _positionmServ;
-ros::ServiceServer _orientationmServ;
+ros::ServiceServer _orientationServ;
 
 tf::TransformBroadcaster* _tfBroadcaster = NULL;
 tf::TransformListener* _tfListener = NULL;
@@ -64,6 +64,8 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input);
 
 //Service callbackes
 bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response);
+bool setOrientation(SetOrientation::Request &request, SetOrientation::Response &response);
+bool setPosition(SetPosition::Request &request, SetPosition::Response &response);
 
 
 int main(int argc, char** argv){
@@ -81,6 +83,8 @@ int main(int argc, char** argv){
     _groundImuPub = _nhPtr->advertise<sensor_msgs::Imu> ("/point_downsample/ground_imu", 1);
 
     _refreshParamServ = _nhPtr->advertiseService("refresh_params", refreshParams);
+    _orientationServ = _nhPtr->advertiseService("set_orientation", setOrientation);
+    _positionmServ = _nhPtr->advertiseService("set_position", setPosition);
 
     ros::spin();
 }
@@ -114,6 +118,15 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     downsample.setLeafSize(0.20f, 0.20f, 0.20f);
     downsample.filter(downSampledInput);
 
+
+    /*TODO:
+     *  -Ground plane detection
+     *      -Conditionally transform orientation using Imu
+     *      -Compute position & orientation from ground plane
+     *      -Update /base_link transform using ground plane
+     *
+     */
+
     //Transform into base_link
     try{
         pcl_ros::transformPointCloud(string("/base_link"), downSampledInput, *cloud, *_tfListener);
@@ -132,3 +145,19 @@ bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &res
 
 	return false;
 }
+
+
+bool setOrientation(SetOrientation::Request &request, SetOrientation::Response &response){
+    //TODO
+
+    return false;
+}
+
+
+bool setPosition(SetPosition::Request &request, SetPosition::Response &response){
+    //TODO
+
+    return false;
+}
+
+

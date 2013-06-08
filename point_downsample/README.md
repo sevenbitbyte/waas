@@ -21,6 +21,9 @@ ROS Services Provided
 * /point_downsample/refresh_params
 * /point_downsample/set_position
 * /point_downsample/set_orientation
+* /point_downsample/set_leaf_size
+* /point_downsample/enable_imu
+* /point_downsample/enable_plane_detect
 
 
 ROS Parameters

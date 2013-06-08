@@ -1,0 +1,7 @@
+#request constants
+int8 ALL_PARAMS=1
+int8 DIFF_PARAMS=2
+#request fields
+int8 params
+---
+bool success
