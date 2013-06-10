@@ -93,11 +93,11 @@ bool parseConfig(std::string configPath){
                 string arraySizeKey = string(nodeName).append(":array_size");
                 string universesKey = string(nodeName).append(":universes");
 
-                string dmxEncoding = iniparser_getstring(dict, dmxEncodingKey.c_str(), (char*)string("rgb").c_str());
-                string dmxChanDir = iniparser_getstring(dict, dmxChanDirKey.c_str(), (char*)string("col").c_str());
-                string arrayShape = iniparser_getstring(dict, arrayShapeKey.c_str(), (char*)string("square").c_str());
-                string arraySize = iniparser_getstring(dict, arraySizeKey.c_str(), (char*)string("").c_str());
-                string universeList = iniparser_getstring(dict, universesKey.c_str(), (char*)string("").c_str());
+                string dmxEncoding = iniparser_getstring(dict, dmxEncodingKey, "rgb");
+                string dmxChanDir = iniparser_getstring(dict, dmxChanDirKey, "col");
+                string arrayShape = iniparser_getstring(dict, arrayShapeKey, "square");
+                string arraySize = iniparser_getstring(dict, arraySizeKey, "");
+                string universeList = iniparser_getstring(dict, universesKey, "");
 
                 //Check for required definitions
                 if(arraySize.length() <= 0){
@@ -162,6 +162,7 @@ bool parseConfig(std::string configPath){
                 } while(index != string::npos);
             }
             else{
+                //Parse override
                 ROS_WARN("DMX overrides not yet supported, ignoring section %s.", nodeName.c_str());
             }
         }

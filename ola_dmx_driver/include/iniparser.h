@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 
 /*
  * The following #include is necessary on many Unixes but not Linux.
@@ -126,6 +127,8 @@ void iniparser_dump(dictionary * d, FILE * f);
  */
 /*--------------------------------------------------------------------------*/
 char * iniparser_getstring(dictionary * d, const char * key, char * def);
+
+std::string iniparser_getstring(dictionary * d, std::string key, std::string def);
 
 /*-------------------------------------------------------------------------*/
 /**

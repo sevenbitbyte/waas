@@ -15,6 +15,7 @@
 */
 /*---------------------------- Includes ------------------------------------*/
 #include <ctype.h>
+#include <string>
 #include "iniparser.h"
 
 /*---------------------------- Defines -------------------------------------*/
@@ -276,6 +277,16 @@ char * iniparser_getstring(dictionary * d, const char * key, char * def)
     lc_key = strlwc(key);
     sval = dictionary_get(d, lc_key, def);
     return sval ;
+}
+
+std::string iniparser_getstring(dictionary * d, std::string key, std::string def){
+    char* value = iniparser_getstring(d, key.c_str(), NULL);
+
+    if(value == NULL){
+        return def;
+    }
+
+    return std::string(value);
 }
 
 /*-------------------------------------------------------------------------*/
