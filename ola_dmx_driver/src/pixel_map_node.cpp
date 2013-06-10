@@ -71,10 +71,6 @@ int main(int argc, char** argv){
 
 
 void imageCallback(const sensor_msgs::Image::ConstPtr& imageMsg){
-    //Using _pixelMap select mapped regions of image and generate valid DmxBuffer's
-    //Use OlaClient to send all DmxBuffer's to correct universes
-    //Should use a double buffering approach to avoid visiable tearing
-
     map<int, ola::DmxBuffer*>::iterator bufferIter = _dmxBuffers.begin();
 
     //Render into DmuxBuffers
@@ -95,6 +91,7 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& imageMsg){
         }
     }
 
+    //Transmit buffers
     for(bufferIter = _dmxBuffers.begin(); bufferIter != _dmxBuffers.end(); bufferIter++){
         _olaCient.SendDmx(bufferIter->first, *bufferIter->second);
     }
@@ -234,6 +231,27 @@ bool parseConfig(std::string configPath){
         if(_pixelMap.array_size[0] > 0 &&
            _pixelMap.array_size[1] > 0 &&
            _pixelMap.universes.size() > 0){
+
+            //Validate mapping coverage
+            int imagePixels = _pixelMap.array_size[0] * _pixelMap.array_size[1];
+            int dmxPixels = 0;
+
+            map<int, vector<pixel_map_config::dmx_map> >::iterator univIter =  _pixelMap.universes.begin();
+            for(; univIter != _pixelMap.universes.end(); univIter++){
+                vector<pixel_map_config::dmx_map>::iterator dmxIter = univIter->second.begin();
+
+                for(; dmxIter != univIter->second.end(); dmxIter++){
+                    dmxPixels += dmxIter->pixels;
+                }
+            }
+
+            if(imagePixels < dmxPixels){
+                ROS_WARN("More DMX pixels[%i] mapped than exist in image[%i], this could be an error or simply an non-optimal mapping", dmxPixels, imagePixels);
+            }
+            else if(imagePixels > dmxPixels){
+                ROS_WARN("Not all image pixels[%i] mapped into DMX pixels[%i]", imagePixels, dmxPixels);
+            }
+
             return true;
         }
         else{
