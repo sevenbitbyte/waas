@@ -78,7 +78,7 @@ add_executable(pixel_map_node src/pixel_map_node.cpp src/dictionary.cpp src/inip
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(pixel_map_node
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} ola olacommon
 )
 
 #############
