@@ -12,27 +12,28 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 
-// PCL specific includes
-#include <pcl-1.6/pcl/ros/conversions.h>
-#include <pcl-1.6/pcl/point_cloud.h>
-#include <pcl-1.6/pcl/point_types.h>
+// PCL specific includessresetd
+#include <pcl/ModelCoefficients.h>
+#include <pcl-1.7/pcl/ros/conversions.h>
+#include <pcl-1.7/pcl/point_cloud.h>
+#include <pcl-1.7/pcl/point_types.h>
 #include <pcl_ros/transforms.h>
-#include <pcl-1.6/pcl/filters/voxel_grid.h>
-#include <pcl-1.6/pcl/filters/plane_clipper3D.h>
-#include <pcl-1.6/pcl/features/normal_3d.h>
-#include <pcl-1.6/pcl/filters/extract_indices.h>
-#include <pcl-1.6/pcl/filters/passthrough.h>
+#include <pcl-1.7/pcl/filters/voxel_grid.h>
+//#include <pcl-1.7/pcl/filters/plane_clipper3D.h>
+#include <pcl-1.7/pcl/features/normal_3d.h>
+#include <pcl-1.7/pcl/filters/extract_indices.h>
+#include <pcl-1.7/pcl/filters/passthrough.h>
 
-#include <pcl-1.6/pcl/sample_consensus/model_types.h>
-#include <pcl-1.6/pcl/sample_consensus/method_types.h>
-#include <pcl-1.6/pcl/segmentation/sac_segmentation.h>
-#include <pcl-1.6/pcl/segmentation/organized_multi_plane_segmentation.h>
-#include <pcl-1.6/pcl/filters/statistical_outlier_removal.h>
+#include <pcl-1.7/pcl/sample_consensus/model_types.h>
+#include <pcl-1.7/pcl/sample_consensus/method_types.h>
+#include <pcl-1.7/pcl/segmentation/sac_segmentation.h>
+#include <pcl-1.7/pcl/segmentation/organized_multi_plane_segmentation.h>
+#include <pcl-1.7/pcl/filters/statistical_outlier_removal.h>
 
 
-#include <pcl-1.6/pcl/features/normal_3d.h>
-#include <pcl-1.6/pcl/kdtree/kdtree.h>
-#include <pcl-1.6/pcl/segmentation/extract_clusters.h>
+#include <pcl-1.7/pcl/features/normal_3d.h>
+#include <pcl-1.7/pcl/kdtree/kdtree.h>
+#include <pcl-1.7/pcl/segmentation/extract_clusters.h>
 
 #include "point_downsample/RefreshParams.h"
 #include "point_downsample/SetPosition.h"
@@ -67,6 +68,8 @@ bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &res
 bool setOrientation(SetOrientation::Request &request, SetOrientation::Response &response);
 bool setPosition(SetPosition::Request &request, SetPosition::Response &response);
 
+//Helper functions
+void updateTransform();
 
 int main(int argc, char** argv){
     ros::init (argc, argv, "point_downsample");
@@ -86,6 +89,10 @@ int main(int argc, char** argv){
     _orientationServ = _nhPtr->advertiseService("set_orientation", setOrientation);
     _positionmServ = _nhPtr->advertiseService("set_position", setPosition);
 
+    //Load settings from parameters
+    _kinectPosition.z = 1.5;
+
+
     ros::spin();
 }
 
@@ -93,6 +100,7 @@ int main(int argc, char** argv){
 void imuCallback(const sensor_msgs::Imu::ConstPtr& imuMsg) {
     tf::Quaternion orientation;
     tf::quaternionMsgToTF(imuMsg->orientation, orientation);
+
 
     tf::Transform transform;
     transform.setOrigin(tf::Vector3(_kinectPosition.x, _kinectPosition.y, _kinectPosition.z));
@@ -115,7 +123,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     //Downsample input point cloud
     pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
     downsample.setInputCloud(input);
-    downsample.setLeafSize(0.20f, 0.20f, 0.20f);
+    downsample.setLeafSize(0.2f, 0.2f, 0.2f);
     downsample.filter(downSampledInput);
 
 
@@ -129,13 +137,14 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     //Transform into base_link
     try{
-        pcl_ros::transformPointCloud(string("/base_link"), downSampledInput, *cloud, *_tfListener);
+        pcl_ros::transformPointCloud(std::string("/base_link"), downSampledInput, *cloud, *_tfListener);
     }
     catch(tf::TransformException ex){
         ROS_ERROR("TFException %s",ex.what());
         return;
     }
 
+    //downSampledInput.header.frame_id = "/base_link";
     _pointsPub.publish(cloud);
 }
 
@@ -148,16 +157,35 @@ bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &res
 
 
 bool setOrientation(SetOrientation::Request &request, SetOrientation::Response &response){
-    //TODO
+    _kinectOrientation = request.orientation;
 
-    return false;
+    updateTransform();
+
+    response.success = true;
+    return response.success;
 }
 
 
 bool setPosition(SetPosition::Request &request, SetPosition::Response &response){
     //TODO
+    _kinectPosition = request.position;
 
-    return false;
+    updateTransform();
+
+    response.success = true;
+    return response.success;
 }
 
+
+void updateTransform(){
+    /*
+     *  If imu_enabled
+     *      -set orientation using imu
+     *  Else if plane_finder_enabled
+     *      -detect largest plane in bottom half of cloud
+     *      -compute height above largest plane
+     *  Else
+     *      -only service calls change positon and orientation
+     */
+}
 

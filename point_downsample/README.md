@@ -19,11 +19,20 @@ ROS Output Topics
 ROS Services Provided
 ---
 * /point_downsample/refresh_params
+* /point_downsample/store_params
 * /point_downsample/set_position
 * /point_downsample/set_orientation
+* /point_downsample/get_position
+* /point_downsample/get_orientation
 * /point_downsample/set_leaf_size
 * /point_downsample/enable_imu
+    bool continous_update
+    int min_samples
+    int period
 * /point_downsample/enable_plane_detect
+    bool continous_update
+    int min_samples
+    int period
 
 
 ROS Parameters
