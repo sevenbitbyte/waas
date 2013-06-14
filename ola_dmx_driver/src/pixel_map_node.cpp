@@ -54,17 +54,13 @@ int main(int argc, char** argv){
     ros::init (argc, argv, "point_downsample");
     _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
 
-
     _frameSub = _nhPtr->subscribe("/animation_host/frame", 1, imageCallback);
-
-
 
     //Load settings from ini
     if(!parseConfig("/home/sevenbit/.waas/pixel_map.ini")){
         ROS_ERROR("Failed to parse pixel map configuration");
         return -1;
     }
-
 
     ros::spin();
 }

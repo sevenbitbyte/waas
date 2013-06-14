@@ -116,6 +116,11 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         return;
     }
 
+    if(_pointsPub.getNumSubscribers() < 1){
+        //Short circuit
+        return;
+    }
+
     sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2);
     sensor_msgs::PointCloud2 downSampledInput;
 
