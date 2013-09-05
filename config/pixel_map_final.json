@@ -1,0 +1,450 @@
+[
+    {
+        "col": 0,
+        "run": {
+            "end": {
+                "offset": 416,
+                "universe": 1
+            },
+            "reverse": false,
+            "start": {
+                "offset": 408,
+                "universe": 1
+            }
+        }
+    },
+    {
+        "col": 1,
+        "run": {
+            "end": {
+                "offset": 434,
+                "universe": 1
+            },
+            "reverse": true,
+            "start": {
+                "offset": 417,
+                "universe": 1
+            }
+        }
+    },
+    {
+        "col": 2,
+        "run": {
+            "end": {
+                "offset": 461,
+                "universe": 1
+            },
+            "reverse": false,
+            "start": {
+                "offset": 435,
+                "universe": 1
+            }
+        }
+    },
+    {
+        "col": 3,
+        "run": {
+            "end": {
+                "offset": 497,
+                "universe": 1
+            },
+            "reverse": true,
+            "start": {
+                "offset": 462,
+                "universe": 1
+            }
+        }
+    },
+    {
+        "col": 4,
+        "run": {
+            "end": {
+                "offset": 32,
+                "universe": 2
+            },
+            "reverse": false,
+            "start": {
+                "offset": 498,
+                "universe": 1
+            }
+        }
+    },
+    {
+        "col": 5,
+        "run": {
+            "end": {
+                "offset": 89,
+                "universe": 2
+            },
+            "reverse": true,
+            "start": {
+                "offset": 33,
+                "universe": 2
+            }
+        }
+    },
+    {
+        "col": 6,
+        "run": {
+            "end": {
+                "offset": 221,
+                "universe": 3
+            },
+            "reverse": false,
+            "start": {
+                "offset": 156,
+                "universe": 3
+            }
+        }
+    },
+    {
+        "col": 7,
+        "run": {
+            "end": {
+                "offset": 296,
+                "universe": 3
+            },
+            "reverse": true,
+            "start": {
+                "offset": 222,
+                "universe": 3
+            }
+        }
+    },
+    {
+        "col": 8,
+        "run": {
+            "end": {
+                "offset": 398,
+                "universe": 2
+            },
+            "reverse": false,
+            "start": {
+                "offset": 306,
+                "universe": 2
+            }
+        }
+    },
+    {
+        "col": 9,
+        "run": {
+            "end": {
+                "offset": 482,
+                "universe": 2
+            },
+            "reverse": true,
+            "start": {
+                "offset": 399,
+                "universe": 2
+            }
+        }
+    },
+    {
+        "col": 10,
+        "run": {
+            "end": {
+                "offset": 101,
+                "universe": 1
+            },
+            "reverse": false,
+            "start": {
+                "offset": 0,
+                "universe": 1
+            }
+        }
+    },
+    {
+        "col": 11,
+        "run": {
+            "end": {
+                "offset": 203,
+                "universe": 1
+            },
+            "reverse": true,
+            "start": {
+                "offset": 102,
+                "universe": 1
+            }
+        }
+    },
+    {
+        "col": 12,
+        "run": {
+            "end": {
+                "offset": 107,
+                "universe": 4
+            },
+            "reverse": false,
+            "start": {
+                "offset": 6,
+                "universe": 4
+            }
+        }
+    },
+    {
+        "col": 13,
+        "run": {
+            "end": {
+                "offset": 209,
+                "universe": 4
+            },
+            "reverse": false,
+            "start": {
+                "offset": 108,
+                "universe": 4
+            }
+        }
+    },
+    {
+        "col": 14,
+        "run": {
+            "end": {
+                "offset": 311,
+                "universe": 4
+            },
+            "reverse": false,
+            "start": {
+                "offset": 210,
+                "universe": 4
+            }
+        }
+    },
+    {
+        "col": 15,
+        "run": {
+            "end": {
+                "offset": 413,
+                "universe": 4
+            },
+            "reverse": false,
+            "start": {
+                "offset": 312,
+                "universe": 4
+            }
+        }
+    },
+    {
+        "col": 16,
+        "run": {
+            "end": {
+                "offset": 5,
+                "universe": 5
+            },
+            "reverse": false,
+            "start": {
+                "offset": 414,
+                "universe": 4
+            }
+        }
+    },
+    {
+        "col": 17,
+        "run": {
+            "end": {
+                "offset": 113,
+                "universe": 5
+            },
+            "reverse": false,
+            "start": {
+                "offset": 12,
+                "universe": 5
+            }
+        }
+    },
+    {
+        "col": 18,
+        "run": {
+            "end": {
+                "offset": 215,
+                "universe": 5
+            },
+            "reverse": false,
+            "start": {
+                "offset": 114,
+                "universe": 5
+            }
+        }
+    },
+    {
+        "col": 19,
+        "run": {
+            "end": {
+                "offset": 323,
+                "universe": 5
+            },
+            "reverse": false,
+            "start": {
+                "offset": 222,
+                "universe": 5
+            }
+        }
+    },
+    {
+        "col": 20,
+        "run": {
+            "end": {
+                "offset": 305,
+                "universe": 1
+            },
+            "reverse": false,
+            "start": {
+                "offset": 204,
+                "universe": 1
+            }
+        }
+    },
+    {
+        "col": 21,
+        "run": {
+            "end": {
+                "offset": 407,
+                "universe": 1
+            },
+            "reverse": true,
+            "start": {
+                "offset": 306,
+                "universe": 1
+            }
+        }
+    },
+    {
+        "col": 22,
+        "run": {
+            "end": {
+                "offset": 71,
+                "universe": 3
+            },
+            "reverse": false,
+            "start": {
+                "offset": 489,
+                "universe": 2
+            }
+        }
+    },
+    {
+        "col": 23,
+        "run": {
+            "end": {
+                "offset": 155,
+                "universe": 3
+            },
+            "reverse": true,
+            "start": {
+                "offset": 72,
+                "universe": 3
+            }
+        }
+    },
+    {
+        "col": 24,
+        "run": {
+            "end": {
+                "offset": 413,
+                "universe": 3
+            },
+            "reverse": false,
+            "start": {
+                "offset": 339,
+                "universe": 3
+            }
+        }
+    },
+    {
+        "col": 25,
+        "run": {
+            "end": {
+                "offset": 479,
+                "universe": 3
+            },
+            "reverse": true,
+            "start": {
+                "offset": 414,
+                "universe": 3
+            }
+        }
+    },
+    {
+        "col": 26,
+        "run": {
+            "end": {
+                "offset": 161,
+                "universe": 2
+            },
+            "reverse": false,
+            "start": {
+                "offset": 105,
+                "universe": 2
+            }
+        }
+    },
+    {
+        "col": 27,
+        "run": {
+            "end": {
+                "offset": 206,
+                "universe": 2
+            },
+            "reverse": true,
+            "start": {
+                "offset": 162,
+                "universe": 2
+            }
+        }
+    },
+    {
+        "col": 28,
+        "run": {
+            "end": {
+                "offset": 242,
+                "universe": 2
+            },
+            "reverse": false,
+            "start": {
+                "offset": 207,
+                "universe": 2
+            }
+        }
+    },
+    {
+        "col": 29,
+        "run": {
+            "end": {
+                "offset": 269,
+                "universe": 2
+            },
+            "reverse": true,
+            "start": {
+                "offset": 243,
+                "universe": 2
+            }
+        }
+    },
+    {
+        "col": 30,
+        "run": {
+            "end": {
+                "offset": 287,
+                "universe": 2
+            },
+            "reverse": false,
+            "start": {
+                "offset": 270,
+                "universe": 2
+            }
+        }
+    },
+    {
+        "col": 31,
+        "run": {
+            "end": {
+                "offset": 296,
+                "universe": 2
+            },
+            "reverse": true,
+            "start": {
+                "offset": 288,
+                "universe": 2
+            }
+        }
+    }
+]
