@@ -193,7 +193,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
         ec.setClusterTolerance (0.25f);
-        ec.setMinClusterSize (5);
+        ec.setMinClusterSize (200);
         ec.setMaxClusterSize (2000);
         ec.setSearchMethod (tree);
         ec.setInputCloud ( foregroundCloud.makeShared() );
