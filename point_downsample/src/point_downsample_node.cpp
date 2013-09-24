@@ -155,12 +155,10 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     if(backgroundCloud.get() == NULL) {
         backgroundCloud = pclCloud;
+        pcl::toROSMsg(*backgroundCloud, backgroundSensor);
 
-
-        //pcl::toROSMsg(*backgroundCloud, backgroundSensor);
+        _backgroundPub.publish(backgroundSensor);
     }
-
-
 
     std::cout << "Conversion done" << std::endl;
 
@@ -185,97 +183,55 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     std::cout << "Filtering complete original=" << pclCloud->points.size() << " foreground=" << foregroundCloud.points.size() << std::endl;
 
-    // Creating the KdTree object for the search method of the extraction
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-    tree->setInputCloud ( foregroundCloud.makeShared() );
+    if(foregroundCloud.points.size() > 0){
+        // Creating the KdTree object for the search method of the extraction
+        pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+        tree->setInputCloud ( foregroundCloud.makeShared() );
 
-    std::cout << "Foreground KdTree ready" << std::endl;
+        std::cout << "Foreground KdTree ready" << std::endl;
 
-    //Background selection
-    /*double searchRadius = 0.1f;
+        std::vector<pcl::PointIndices> cluster_indices;
+        pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+        ec.setClusterTolerance (0.25f);
+        ec.setMinClusterSize (5);
+        ec.setMaxClusterSize (2000);
+        ec.setSearchMethod (tree);
+        ec.setInputCloud ( foregroundCloud.makeShared() );
+        ec.extract (cluster_indices);
 
-    pcl::PointCloud<pcl::PointXYZ>::iterator pointIter = backgroundCloud->begin();
-    for(pointIter; pointIter != backgroundCloud->end(); pointIter++){
-        pcl::IndicesPtr inliers( new vector<int> );
-        std::vector<float> deltas;
+        std::cout << cluster_indices.size() << " clusters" << std::endl;
 
-        if( tree->radiusSearch(*pointIter, searchRadius, *inliers, deltas) > 0){
-            //Remove points from foreground cloud
-            //foregroundCloud.erase(inliers->begin(), inliers->end());
+        int index=0;
 
-            pcl::ExtractIndices<pcl::PointXYZ> extract;
-            extract.setInputCloud (foregroundCloud.makeShared());
-            extract.setIndices (inliers);
-            extract.setNegative (true);
-            extract.filter (foregroundCloud);
+        for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
 
-            //Update tree
-            //tree->setInputCloud(foregroundCloud);
-        }
-    }*/
+            float maxValues[3] = {-9000, -9000, -9000};
+            float minValues[3] = {9000, 9000, 9000};
+            float centroid[3] = {0, 0, 0};
 
+            for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++) {
 
+                for(int i=0; i<3; i++){
+                    if(pclCloud->points[*pit].data[i] > maxValues[i]){
+                        maxValues[i] = pclCloud->points[*pit].data[i];
+                    }
 
-    //tree->radiusSearch()
+                    if(pclCloud->points[*pit].data[i] < minValues[i]){
+                        minValues[i] = pclCloud->points[*pit].data[i];
+                    }
 
-    //tree->radiusSearch(*backgroundCloud, empty, searchRadius, indexLists, distanceLists);
-
-    //pcl::IndicesPtr inliers( new vector<int> );
-
-    /*for(int i=0; i < indexLists.size(); i++){
-        inliers->insert( inliers->end(), indexLists[i].begin(), indexLists[i].end() );
-    }*/
-
-    // Extract the background inliers from the input cloud
-    /*pcl::ExtractIndices<pcl::PointXYZ> extract;
-    extract.setInputCloud (pclCloud);
-    extract.setIndices (inliers);
-    extract.setNegative (true);
-    extract.filter (foregroundCloud);*/
-
-    //tree->setInputCloud(foregroundCloud.makeShared());
-
-    std::vector<pcl::PointIndices> cluster_indices;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance (0.25f);
-    ec.setMinClusterSize (5);
-    ec.setMaxClusterSize (2000);
-    ec.setSearchMethod (tree);
-    ec.setInputCloud ( foregroundCloud.makeShared() );
-    ec.extract (cluster_indices);
-
-    std::cout << cluster_indices.size() << " clusters" << std::endl;
-
-    int index=0;
-
-    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
-
-        float maxValues[3] = {-9000, -9000, -9000};
-        float minValues[3] = {9000, 9000, 9000};
-        float centroid[3] = {0, 0, 0};
-
-        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++) {
+                    centroid[i] += pclCloud->points[*pit].data[i];
+                }
+            }
 
             for(int i=0; i<3; i++){
-                if(pclCloud->points[*pit].data[i] > maxValues[i]){
-                    maxValues[i] = pclCloud->points[*pit].data[i];
-                }
-
-                if(pclCloud->points[*pit].data[i] < minValues[i]){
-                    minValues[i] = pclCloud->points[*pit].data[i];
-                }
-
-                centroid[i] += pclCloud->points[*pit].data[i];
+                centroid[i] = centroid[i] / it->indices.size();
             }
+
+            visualization_msgs::MarkerArrayPtr markers = generateMarkers(centroid, maxValues, minValues, index++);
+
+            _visualizerPub.publish(markers);
         }
-
-        for(int i=0; i<3; i++){
-            centroid[i] = centroid[i] / it->indices.size();
-        }
-
-        visualization_msgs::MarkerArrayPtr markers = generateMarkers(centroid, maxValues, minValues, index++);
-
-        _visualizerPub.publish(markers);
     }
 
     /*TODO:
@@ -303,7 +259,6 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     sensor_msgs::PointCloud2 foregroundSensor;
     pcl::toROSMsg(foregroundCloud, foregroundSensor);
 
-    _backgroundPub.publish(backgroundSensor);
     _foregroundPub.publish(foregroundSensor);
     //_pointsPub.publish(downSampledInput);
 }
