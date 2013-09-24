@@ -138,20 +138,20 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     }
 
     //sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2);
-    //sensor_msgs::PointCloud2 downSampledInput;
+    sensor_msgs::PointCloud2 downSampledInput;
 
 
     //Downsample input point cloud
-    float leafSize = 0.15f;
-    //pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
-    //downsample.setInputCloud(input);
-    //downsample.setLeafSize(leafSize, leafSize, leafSize);
-    //downsample.filter(downSampledInput);
+    float leafSize = 0.05f;
+    pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
+    downsample.setInputCloud(input);
+    downsample.setLeafSize(leafSize, leafSize, leafSize);
+    downsample.filter(downSampledInput);
 
-    //std::cout << "Input cloud size " << input->data.size() << ", downsampled size " << downSampledInput.data.size() <<  std::endl;
+    std::cout << "Input cloud size " << input->data.size() << ", downsampled size " << downSampledInput.data.size() <<  std::endl;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud( new pcl::PointCloud<pcl::PointXYZ> );
-    pcl::fromROSMsg (*input, *pclCloud);
+    pcl::fromROSMsg (downSampledInput, *pclCloud);
 
     if(backgroundCloud.get() == NULL) {
         backgroundCloud = pclCloud;
@@ -260,7 +260,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     pcl::toROSMsg(foregroundCloud, foregroundSensor);
 
     _foregroundPub.publish(foregroundSensor);
-    //_pointsPub.publish(downSampledInput);
+    _pointsPub.publish(downSampledInput);
 }
 
 
