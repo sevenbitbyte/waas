@@ -53,6 +53,10 @@ class MainWindow : public QMainWindow
 
         LedRun* _nextRun;
 
+        //Controls
+        /*bool _blackoutReq;
+        bool _intensityRequest;
+        int _intensityValue;*/
 
         //Cursor variables
         QColor _cursorValue;
@@ -60,6 +64,8 @@ class MainWindow : public QMainWindow
         DmxAddress _dmxCursor;
         QDateTime _lastAnimateTime;
         int _animationStage;
+        int _frameCount;
+        bool _forceRender;
 };
 
 #endif // MAINWINDOW_H

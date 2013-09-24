@@ -4,11 +4,11 @@ PixelMapper::PixelMapper(OlaManager* ola, QObject *parent) :
     QObject(parent)
 {
     _ola = ola;
-    _image = new QImage(32, 34, QImage::Format_RGB32);
+    _image = new QImage(32, 6, QImage::Format_RGB32);
 
     QPainter painter;
 
-    QRect bounds(0,0, 32, 34);
+    QRect bounds(0,0, 32, 6);
     QBrush fillBrush( QColor(255,0,0) );
 
     painter.begin(_image);
@@ -22,7 +22,9 @@ PixelMapper::PixelMapper(OlaManager* ola, QObject *parent) :
     _outputLabel = NULL;
     testRun = NULL;
 
-    connect(_renderTimer, SIGNAL(timeout()), this, SLOT(render()));
+    //connect(_renderTimer, SIGNAL(timeout()), this, SLOT(render()));
+
+    //_renderTimer->start();
 }
 
 
@@ -51,11 +53,13 @@ void PixelMapper::render(){
     QList<int> columns = _colToLedRun.keys();
 
     if(animationForward){
-        if(animationStep < _image->height()){
+        if(animationStep < /*_image->height()*/ 360){
             animationStep++;
         }
         else{
-            animationForward = false;
+            animationStep=0;
+            animationForward = true;
+            //animationForward = false;
         }
     }
 
@@ -74,12 +78,24 @@ void PixelMapper::render(){
 
     painter.begin(_image);
 
-    QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, 34));
-    linearGrad.setColorAt(0, Qt::blue);
-    linearGrad.setColorAt(1, Qt::red);
+    QConicalGradient conicalGrad(1,1, animationStep*10);
+    conicalGrad.setColorAt(0, Qt::red);
+    conicalGrad.setColorAt(90.0/360.0, Qt::green);
+    conicalGrad.setColorAt(180.0/360.0, Qt::blue);
+    conicalGrad.setColorAt(270.0/360.0, Qt::magenta);
+    conicalGrad.setColorAt(360.0/360.0, Qt::yellow);
 
-    QBrush fillBrush( linearGrad );
-    QRect fillRect(0,0, 32, animationStep);
+
+    //QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, _image->height()));
+    //linearGrad.setColorAt(0, Qt::white);
+    //linearGrad.setColorAt(0.3, Qt::darkGray);
+    /*linearGrad.setColorAt(0.2, Qt::red);
+    linearGrad.setColorAt(0.4, Qt::white);
+    linearGrad.setColorAt(0.8, Qt::blue);*/
+    //linearGrad.setColorAt(1, Qt::black);
+
+    QBrush fillBrush( conicalGrad );
+    QRect fillRect(0,0, 32, _image->height());
 
     //painter.setBrush(fillBrush);
     painter.fillRect(fillRect, fillBrush);
@@ -113,6 +129,7 @@ void PixelMapper::render(){
                 QRgb pixelData = _image->pixel(col, row);
 
                 _ola->setPixel(addr, QColor(pixelData));
+
 
                 row++;
                 addr = addr.add(-3);

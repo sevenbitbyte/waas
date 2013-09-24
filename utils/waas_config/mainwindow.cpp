@@ -17,17 +17,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->imageLabel->setScaledContents(true);
 
     _dmxStart.universe = 1;
-    _dmxEnd.offset = 0;
+    _dmxStart.offset = 0;
 
     _dmxEnd.universe = 1;
     _dmxEnd.offset = 0;
 
     _dmxCursor = _dmxStart;
-
     _animationStage = 0;
     _cursorValue.setRgb(0, 0, 0);
     _animateTimer = new QTimer(this);
-    _animateTimer->setInterval(100);
+    _animateTimer->setInterval(50);
     _animateTimer->setSingleShot(false);
 
     connect(_animateTimer, SIGNAL(timeout()), this, SLOT(animateDmxCursor()));
@@ -51,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(savePixelMap()));
 
     _animateTimer->start();
+    updateUi();
 }
 
 MainWindow::~MainWindow()
@@ -75,7 +75,7 @@ void MainWindow::animateDmxCursor(){
         int value = _cursorValue.red();
 
         if(value < 255){
-            value = qMin(value + 80, 255);
+            value = qMin(value + 20, 255);
             _cursorValue.setRed( value );
             _cursorValue.setGreen( value );
             _cursorValue.setBlue( value );
@@ -90,7 +90,7 @@ void MainWindow::animateDmxCursor(){
         int value = _cursorValue.red();
 
         if(value > 0){
-            value = qMax(value - 80, 0);
+            value = qMax(value - 20, 0);
             _cursorValue.setRed( value );
             _cursorValue.setGreen( value );
             _cursorValue.setBlue( value );
@@ -100,6 +100,12 @@ void MainWindow::animateDmxCursor(){
             _animationStage=0;
         }
     }
+
+    _frameCount++;
+    //if(_frameCount%2 == 0 || _forceRender){
+        _pixelMap->render();
+        _forceRender = false;
+    //}
 
     _ola->setPixel(_dmxCursor, _cursorValue);
     _ola->sendBuffers();
@@ -112,6 +118,7 @@ void MainWindow::cursorResetSlot(){
 
     if(_nextRun != NULL){
         _nextRun->dmxEnd = _dmxCursor;
+        _forceRender = true;
     }
 
     updateUi();
@@ -122,6 +129,7 @@ void MainWindow::cursorForwardSlot(){
 
     if(_nextRun != NULL){
         _nextRun->dmxEnd = _dmxCursor;
+        _forceRender = true;
     }
 }
 
@@ -130,6 +138,7 @@ void MainWindow::cursorBackwardSlot(){
 
     if(_nextRun != NULL){
         _nextRun->dmxEnd = _dmxCursor;
+        _forceRender = true;
     }
 }
 

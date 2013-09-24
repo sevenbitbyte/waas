@@ -280,7 +280,10 @@ char * iniparser_getstring(dictionary * d, const char * key, char * def)
 }
 
 std::string iniparser_getstring(dictionary * d, std::string key, std::string def){
+    printf("ini Requesting key=%s\n", key.c_str());
     char* value = iniparser_getstring(d, key.c_str(), NULL);
+
+    printf("ini %s=%s\n", key.c_str(), value);
 
     if(value == NULL){
         return def;
