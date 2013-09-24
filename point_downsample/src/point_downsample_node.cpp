@@ -140,9 +140,10 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
 
     //Downsample input point cloud
+    float leafSize = 0.15f;
     pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
     downsample.setInputCloud(input);
-    downsample.setLeafSize(0.2f, 0.2f, 0.2f);
+    downsample.setLeafSize(leafSize, leafSize, leafSize);
     downsample.filter(downSampledInput);
 
     std::cout << "Input cloud size " << input->data.size() << ", downsampled size " << downSampledInput.data.size() <<  std::endl;
@@ -168,7 +169,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     std::cout << "Foreground KdTree ready" << std::endl;
 
     //Background selection
-    double searchRadius = 0.3f;
+    double searchRadius = 0.1f;
 
     pcl::PointCloud<pcl::PointXYZ>::iterator pointIter = backgroundCloud->begin();
     for(pointIter; pointIter != backgroundCloud->end(); pointIter++){
@@ -185,6 +186,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
             extract.setNegative (true);
             extract.filter (foregroundCloud);
 
+            tree->setInputCloud(foregroundCloud.makeShared());
             //Update tree
             //tree->setInputCloud(foregroundCloud);
         }
@@ -213,7 +215,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance (0.3f);
+    ec.setClusterTolerance (0.25f);
     ec.setMinClusterSize (5);
     ec.setMaxClusterSize (2000);
     ec.setSearchMethod (tree);
