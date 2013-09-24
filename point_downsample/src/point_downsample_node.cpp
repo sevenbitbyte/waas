@@ -142,7 +142,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
 
     //Downsample input point cloud
-    float leafSize = 0.08f;
+    float leafSize = 0.05f;
     pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
     downsample.setInputCloud(input);
     downsample.setLeafSize(leafSize, leafSize, leafSize);
@@ -192,7 +192,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-        ec.setClusterTolerance (0.25f);
+        ec.setClusterTolerance (0.15f);
         ec.setMinClusterSize (50);
         ec.setMaxClusterSize (2000);
         ec.setSearchMethod (tree);
@@ -212,15 +212,15 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
             for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++) {
 
                 for(int i=0; i<3; i++){
-                    if(pclCloud->points[*pit].data[i] > maxValues[i]){
-                        maxValues[i] = pclCloud->points[*pit].data[i];
+                    if(foregroundCloud.points[*pit].data[i] > maxValues[i]){
+                        maxValues[i] = foregroundCloud.points[*pit].data[i];
                     }
 
-                    if(pclCloud->points[*pit].data[i] < minValues[i]){
-                        minValues[i] = pclCloud->points[*pit].data[i];
+                    if(foregroundCloud.points[*pit].data[i] < minValues[i]){
+                        minValues[i] = foregroundCloud.points[*pit].data[i];
                     }
 
-                    centroid[i] += pclCloud->points[*pit].data[i];
+                    centroid[i] += foregroundCloud.points[*pit].data[i];
                 }
             }
 
