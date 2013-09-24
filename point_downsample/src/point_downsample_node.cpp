@@ -168,7 +168,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     std::cout << "Foreground KdTree ready" << std::endl;
 
     //Background selection
-    double searchRadius = 0.25f;
+    double searchRadius = 0.3f;
 
     pcl::PointCloud<pcl::PointXYZ>::iterator pointIter = backgroundCloud->begin();
     for(pointIter; pointIter != backgroundCloud->end(); pointIter++){
