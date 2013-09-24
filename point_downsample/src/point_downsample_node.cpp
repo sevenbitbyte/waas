@@ -156,36 +156,59 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         pcl::toROSMsg(*backgroundCloud, backgroundSensor);
     }
 
-    pcl::PointCloud<pcl::PointXYZ> foregroundCloud;
+    pcl::PointCloud<pcl::PointXYZ> foregroundCloud(*pclCloud);
 
     std::cout << "Conversion done" << std::endl;
 
 
     // Creating the KdTree object for the search method of the extraction
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-    tree->setInputCloud ( pclCloud );
+    tree->setInputCloud ( foregroundCloud.makeShared() );
 
     std::cout << "Foreground KdTree ready" << std::endl;
 
     //Background selection
     double searchRadius = 0.1f;
     std::vector<int> empty;
-    std::vector< std::vector<int> > indexLists;
+    std::vector<pcl::PointIndices> indexLists;
     std::vector< std::vector<float> > distanceLists;
-    tree->radiusSearch(*backgroundCloud, empty, searchRadius, indexLists, distanceLists);
 
-    pcl::IndicesPtr inliers( new vector<int> );
+    pcl::PointCloud<pcl::PointXYZ>::iterator pointIter = backgroundCloud->begin();
+    for(pointIter; pointIter != backgroundCloud->end(); pointIter++){
+        pcl::IndicesPtr inliers;
+        std::vector<float> deltas;
 
-    for(int i=0; i < indexLists.size(); i++){
-        inliers->insert( inliers->end(), indexLists[i].begin(), indexLists[i].end() );
+        if( tree->radiusSearch(*pointIter, searchRadius, *inliers, deltas) > 0){
+            //Remove points from foreground cloud
+            //foregroundCloud.erase(inliers->begin(), inliers->end());
+
+            pcl::ExtractIndices<pcl::PointXYZ> extract;
+            extract.setInputCloud (foregroundCloud.makeShared());
+            extract.setIndices (inliers);
+            extract.setNegative (true);
+            extract.filter (foregroundCloud);
+
+            //Update tree
+            //tree->setInputCloud(foregroundCloud);
+        }
     }
 
+    //tree->radiusSearch()
+
+    //tree->radiusSearch(*backgroundCloud, empty, searchRadius, indexLists, distanceLists);
+
+    //pcl::IndicesPtr inliers( new vector<int> );
+
+    /*for(int i=0; i < indexLists.size(); i++){
+        inliers->insert( inliers->end(), indexLists[i].begin(), indexLists[i].end() );
+    }*/
+
     // Extract the background inliers from the input cloud
-    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    /*pcl::ExtractIndices<pcl::PointXYZ> extract;
     extract.setInputCloud (pclCloud);
     extract.setIndices (inliers);
     extract.setNegative (true);
-    extract.filter (foregroundCloud);
+    extract.filter (foregroundCloud);*/
 
     tree->setInputCloud(foregroundCloud.makeShared());
 
