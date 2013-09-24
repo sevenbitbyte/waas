@@ -122,7 +122,7 @@ void imuCallback(const sensor_msgs::Imu::ConstPtr& imuMsg) {
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr backgroundCloud;
-sensor_msgs::PointCloud2Ptr backgroundSensor;
+sensor_msgs::PointCloud2 backgroundSensor;
 
 void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     if(input->data.size() <= 0){
@@ -153,9 +153,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     if(backgroundCloud.get() == NULL) {
         backgroundCloud = pclCloud;
 
-        //backgroundSensor = sensor_msgs::PointCloud2Ptr( new sensor_msgs::PointCloud );
-
-        pcl::toROSMsg(*backgroundCloud, *backgroundSensor);
+        pcl::toROSMsg(*backgroundCloud, backgroundSensor);
     }
 
     pcl::PointCloud<pcl::PointXYZ> foregroundCloud;
@@ -259,7 +257,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     sensor_msgs::PointCloud2 foregroundSensor;
     pcl::toROSMsg(foregroundCloud, foregroundSensor);
 
-    _backgroundPub.publish(*backgroundSensor);
+    _backgroundPub.publish(backgroundSensor);
     _foregroundPub.publish(foregroundSensor);
     _pointsPub.publish(downSampledInput);
 }
