@@ -163,7 +163,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     std::cout << "Conversion done" << std::endl;
 
 
-    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.2f);
+    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.3f);
     octree.setInputCloud(backgroundCloud);
     octree.addPointsFromInputCloud();
 
@@ -193,7 +193,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
         ec.setClusterTolerance (0.15f);
-        ec.setMinClusterSize (50);
+        ec.setMinClusterSize (100);
         ec.setMaxClusterSize (2000);
         ec.setSearchMethod (tree);
         ec.setInputCloud ( foregroundCloud.makeShared() );
@@ -355,7 +355,7 @@ visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxV
     boundsMarker.scale.x = range[0];
     boundsMarker.scale.y = range[1];
     boundsMarker.scale.z = range[2];
-    boundsMarker.color.a = 0.5;
+    boundsMarker.color.a = 0.1;
     boundsMarker.color.r = 0.0;
     boundsMarker.color.g = 0.0;
     boundsMarker.color.b = 1.0;
