@@ -33,6 +33,8 @@
 
 #include <pcl-1.6/pcl/features/normal_3d.h>
 #include <pcl-1.6/pcl/kdtree/kdtree.h>
+#include <pcl-1.6/pcl/octree/octree.h>
+//#include <pcl-1.6/pcl
 #include <pcl-1.6/pcl/segmentation/extract_clusters.h>
 
 #include "point_downsample/RefreshParams.h"
@@ -135,32 +137,53 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         //return;
     }
 
-    sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2);
-    sensor_msgs::PointCloud2 downSampledInput;
+    //sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2);
+    //sensor_msgs::PointCloud2 downSampledInput;
 
 
     //Downsample input point cloud
     float leafSize = 0.15f;
-    pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
-    downsample.setInputCloud(input);
-    downsample.setLeafSize(leafSize, leafSize, leafSize);
-    downsample.filter(downSampledInput);
+    //pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
+    //downsample.setInputCloud(input);
+    //downsample.setLeafSize(leafSize, leafSize, leafSize);
+    //downsample.filter(downSampledInput);
 
-    std::cout << "Input cloud size " << input->data.size() << ", downsampled size " << downSampledInput.data.size() <<  std::endl;
+    //std::cout << "Input cloud size " << input->data.size() << ", downsampled size " << downSampledInput.data.size() <<  std::endl;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud( new pcl::PointCloud<pcl::PointXYZ> );
-    pcl::fromROSMsg (downSampledInput, *pclCloud);
+    pcl::fromROSMsg (*input, *pclCloud);
 
     if(backgroundCloud.get() == NULL) {
         backgroundCloud = pclCloud;
 
-        pcl::toROSMsg(*backgroundCloud, backgroundSensor);
+
+        //pcl::toROSMsg(*backgroundCloud, backgroundSensor);
     }
 
-    pcl::PointCloud<pcl::PointXYZ> foregroundCloud(*pclCloud);
+
 
     std::cout << "Conversion done" << std::endl;
 
+
+    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.15f);
+    octree.setInputCloud(backgroundCloud);
+    octree.addPointsFromInputCloud();
+
+    octree.switchBuffers();
+
+    octree.setInputCloud(pclCloud);
+    octree.addPointsFromInputCloud();
+
+    //IndicesConstPtr octIndecess = octree.getIndices();
+
+    std::vector<int> newPointIdxVector;
+
+     // Get vector of point indices from octree voxels which did not exist in previous buffer
+    octree.getPointIndicesFromNewVoxels (newPointIdxVector);
+
+    pcl::PointCloud<pcl::PointXYZ> foregroundCloud(*pclCloud, newPointIdxVector);
+
+    std::cout << "Filtering complete original=" << pclCloud->points.size() << " foreground=" << foregroundCloud.points.size() << std::endl;
 
     // Creating the KdTree object for the search method of the extraction
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
@@ -169,7 +192,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     std::cout << "Foreground KdTree ready" << std::endl;
 
     //Background selection
-    double searchRadius = 0.1f;
+    /*double searchRadius = 0.1f;
 
     pcl::PointCloud<pcl::PointXYZ>::iterator pointIter = backgroundCloud->begin();
     for(pointIter; pointIter != backgroundCloud->end(); pointIter++){
@@ -186,13 +209,12 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
             extract.setNegative (true);
             extract.filter (foregroundCloud);
 
-            tree->setInputCloud(foregroundCloud.makeShared());
             //Update tree
             //tree->setInputCloud(foregroundCloud);
         }
-    }
+    }*/
 
-    std::cout << "Filtering complete" << std::endl;
+
 
     //tree->radiusSearch()
 
@@ -211,7 +233,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     extract.setNegative (true);
     extract.filter (foregroundCloud);*/
 
-    tree->setInputCloud(foregroundCloud.makeShared());
+    //tree->setInputCloud(foregroundCloud.makeShared());
 
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
@@ -283,7 +305,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     _backgroundPub.publish(backgroundSensor);
     _foregroundPub.publish(foregroundSensor);
-    _pointsPub.publish(downSampledInput);
+    //_pointsPub.publish(downSampledInput);
 }
 
 
