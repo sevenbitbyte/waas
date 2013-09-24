@@ -142,7 +142,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
 
     //Downsample input point cloud
-    float leafSize = 0.05f;
+    float leafSize = 0.08f;
     pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
     downsample.setInputCloud(input);
     downsample.setLeafSize(leafSize, leafSize, leafSize);
@@ -163,7 +163,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     std::cout << "Conversion done" << std::endl;
 
 
-    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.15f);
+    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.2f);
     octree.setInputCloud(backgroundCloud);
     octree.addPointsFromInputCloud();
 
@@ -193,7 +193,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
         ec.setClusterTolerance (0.25f);
-        ec.setMinClusterSize (200);
+        ec.setMinClusterSize (50);
         ec.setMaxClusterSize (2000);
         ec.setSearchMethod (tree);
         ec.setInputCloud ( foregroundCloud.makeShared() );
