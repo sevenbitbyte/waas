@@ -132,7 +132,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     if(_pointsPub.getNumSubscribers() < 1){
         //Short circuit
-        return;
+        //return;
     }
 
     sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2);
@@ -142,7 +142,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     //Downsample input point cloud
     pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
     downsample.setInputCloud(input);
-    downsample.setLeafSize(0.1f, 0.1f, 0.1f);
+    downsample.setLeafSize(0.2f, 0.2f, 0.2f);
     downsample.filter(downSampledInput);
 
     std::cout << "Input cloud size " << input->data.size() << ", downsampled size " << downSampledInput.data.size() <<  std::endl;
@@ -168,7 +168,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     std::cout << "Foreground KdTree ready" << std::endl;
 
     //Background selection
-    double searchRadius = 0.1f;
+    double searchRadius = 0.25f;
 
     pcl::PointCloud<pcl::PointXYZ>::iterator pointIter = backgroundCloud->begin();
     for(pointIter; pointIter != backgroundCloud->end(); pointIter++){
