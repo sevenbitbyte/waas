@@ -169,13 +169,10 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     //Background selection
     double searchRadius = 0.1f;
-    std::vector<int> empty;
-    std::vector<pcl::PointIndices> indexLists;
-    std::vector< std::vector<float> > distanceLists;
 
     pcl::PointCloud<pcl::PointXYZ>::iterator pointIter = backgroundCloud->begin();
     for(pointIter; pointIter != backgroundCloud->end(); pointIter++){
-        pcl::IndicesPtr inliers;
+        pcl::IndicesPtr inliers( new vector<int> );
         std::vector<float> deltas;
 
         if( tree->radiusSearch(*pointIter, searchRadius, *inliers, deltas) > 0){
@@ -192,6 +189,8 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
             //tree->setInputCloud(foregroundCloud);
         }
     }
+
+    std::cout << "Filtering complete" << std::endl;
 
     //tree->radiusSearch()
 
