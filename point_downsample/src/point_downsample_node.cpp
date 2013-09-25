@@ -455,11 +455,11 @@ void updateLights(vector<point3d> centroids){
         }
 
         if(distance[_lightConfig.axis] > -1.0f){
-            float value = distance[_lightConfig.axis] / _lightConfig.radius;
+            float value = fmax(distance[_lightConfig.axis] / _lightConfig.radius, 0.01f);
 
             //float hue =
 
-            QColor color = QColor::fromHsvF(60.0f/360.0f, 0.0f, value);
+            QColor color = QColor::fromHsvF(60.0f/360.0f, 0.0f, 1.0f/value);
 
             //QColor color(value, value, value);
 
