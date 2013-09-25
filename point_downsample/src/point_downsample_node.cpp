@@ -378,7 +378,7 @@ visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxV
     centroidMarker.scale.x = 0.3;
     centroidMarker.scale.y = 0.3;
     centroidMarker.scale.z = 0.3;
-    centroidMarker.color.a = 0.7;
+    centroidMarker.color.a = 0.3;
     centroidMarker.color.r = 1.0;
     centroidMarker.color.g = 1.0;
     centroidMarker.color.b = 0.0;
@@ -410,7 +410,7 @@ visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxV
     boundsMarker.scale.x = range[0];
     boundsMarker.scale.y = range[1];
     boundsMarker.scale.z = range[2];
-    boundsMarker.color.a = 0.1;
+    boundsMarker.color.a = 0.2;
     boundsMarker.color.r = 0.0;
     boundsMarker.color.g = 0.0;
     boundsMarker.color.b = 1.0;
