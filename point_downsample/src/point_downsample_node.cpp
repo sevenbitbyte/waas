@@ -294,6 +294,9 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         sensor_msgs::PointCloud2 clusterSensor;
         pcl::toROSMsg(clusterCloud, clusterSensor);
+
+        clusterSensor.header.frame_id = input->header.frame_id;
+
         _clustersPub.publish(clusterSensor);
     }
 
