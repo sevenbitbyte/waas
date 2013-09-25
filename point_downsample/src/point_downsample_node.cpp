@@ -448,7 +448,7 @@ void updateLights(vector<point3d> centroids){
         for(int i=0; i<centroids.size(); i++){  //For each blob
             float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]) / _lightConfig.radius);
 
-            if(range < 3.5f){
+            if(range < 4.5f){
                 force[_lightConfig.axis] += fmin(1.0f, 1.0f / ( range * range ));
             }
         }
