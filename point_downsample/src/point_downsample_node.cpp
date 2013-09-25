@@ -49,6 +49,7 @@ ros::NodeHandlePtr _nhPtr;
 ros::Publisher _pointsPub;
 ros::Publisher _backgroundPub;
 ros::Publisher _foregroundPub;
+ros::Publisher _clustersPub;
 ros::Publisher _groundImuPub;
 ros::Publisher _visualizerPub;
 
@@ -128,6 +129,7 @@ int main(int argc, char** argv){
 
     _pointsPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/points", 1);
     _backgroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/background", 1);
+    _clustersPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/clusters", 1);
     _foregroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/foreground", 1);
     _groundImuPub = _nhPtr->advertise<sensor_msgs::Imu> ("/point_downsample/ground_imu", 1);
     _visualizerPub = _nhPtr->advertise<visualization_msgs::MarkerArray>( "/point_downsample/markers", 0 );
@@ -254,15 +256,17 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         pcl::PointCloud<pcl::PointXYZ> clusterCloud;
 
-        //clusterCloud.insert()
-
         for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
 
             float maxValues[3] = {-9000, -9000, -9000};
             float minValues[3] = {9000, 9000, 9000};
             float centroid[3] = {0, 0, 0};
 
-            for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++) {
+            pcl::PointCloud<pcl::PointXYZ> localCluster(foregroundCloud, it->indices);
+            clusterCloud += localCluster;
+
+
+            for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++) {
 
                 for(int i=0; i<3; i++){
                     if(foregroundCloud.points[*pit].data[i] > maxValues[i]){
@@ -287,6 +291,10 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
             _visualizerPub.publish(markers);
         }
+
+        sensor_msgs::PointCloud2 clusterSensor;
+        pcl::toROSMsg(clusterCloud, clusterSensor);
+        _clustersPub.publish(clusterSensor);
     }
 
     updateLights(centroids);
