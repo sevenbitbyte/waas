@@ -145,7 +145,7 @@ int main(int argc, char** argv){
     _lightConfig.end.offset = 3*32;
     _lightConfig.end.universe = 1;
 
-    _lightConfig.radius = 1.5f;
+    _lightConfig.radius = 0.6f;
     _lightConfig.spacing = 0.2032f; //8in in meters
     _lightConfig.shift = 2.5f;      //2.5 meters
     _lightConfig.axis = 2;
@@ -446,12 +446,18 @@ void updateLights(vector<point3d> centroids){
         float force[3] = {0.0f, 0.0f, 0.0f};
 
         for(int i=0; i<centroids.size(); i++){  //For each blob
-            float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]) - _lightConfig.radius);
+            float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]) / _lightConfig.radius);
 
-            force[_lightConfig.axis] += fmin(1.0f, 1.0f / ( range * range ));
+            if(range < 1.0f){
+                force[_lightConfig.axis] += fmin(1.0f, 1.0f / ( range ));
+            }
         }
 
-        QColor color = QColor::fromHsv(0.0f, 1.0f, fmin( force[_lightConfig.axis], 1.0f ));
+        qreal value = fmin(1.0, force[_lightConfig.axis]);
+
+        //QColor color = QColor::fromHsv(0.0f, 1.0f, fmin( force[_lightConfig.axis], 1.0f ));
+
+        QColor color(value, value, value);
 
         _ola->setPixel(currentAddress, color);
 
