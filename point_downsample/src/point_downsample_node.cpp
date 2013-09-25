@@ -461,7 +461,7 @@ void updateLights(vector<point3d> centroids){
 
             //float hue =
 
-            QColor color = QColor::fromHsvF(60.0f/360.0f, 0.0f, 1.0f-value);
+            QColor color = QColor::fromHsvF(60.0f/360.0f, value, 1.0f-value);
 
             //QColor color(value, value, value);
 
