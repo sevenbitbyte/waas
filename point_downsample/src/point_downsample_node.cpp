@@ -438,6 +438,8 @@ void updateLights(vector<point3d> centroids){
     float radiusSq = _lightConfig.radius * _lightConfig.radius;
     DmxAddress currentAddress = _lightConfig.origin;
 
+    _ola->blackout();
+
     while(currentAddress.offset < _lightConfig.end.offset){ //For each light
 
         float force[3] = {0.0f, 0.0f, 0.0f};
@@ -454,4 +456,6 @@ void updateLights(vector<point3d> centroids){
 
         currentAddress.offset += 3;
     }
+
+    _ola->sendBuffers();
 }
