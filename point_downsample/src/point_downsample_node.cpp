@@ -145,7 +145,7 @@ int main(int argc, char** argv){
     _lightConfig.end.offset = 3*32;
     _lightConfig.end.universe = 1;
 
-    _lightConfig.radius = 0.03f;
+    _lightConfig.radius = 0.08f;
     _lightConfig.spacing = 0.2286f; //9in in meters
     _lightConfig.shift = 2.9f;      //2.5 meters
     _lightConfig.axis = 2;
@@ -448,9 +448,9 @@ void updateLights(vector<point3d> centroids){
         for(int i=0; i<centroids.size(); i++){  //For each blob
             float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]) / _lightConfig.radius);
 
-            //if(range < 1.0f){
+            if(range < 1.0f){
                 force[_lightConfig.axis] += fmin(1.0f, 1.0f / ( range * range ));
-            //}
+            }
         }
 
         int value = (int) (fmin(1.0, force[_lightConfig.axis]) * 255.0f);
