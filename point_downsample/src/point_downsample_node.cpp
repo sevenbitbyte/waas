@@ -466,7 +466,7 @@ void updateLights(vector<point3d> centroids){
         if(distance[_lightConfig.axis] > -1.0f){
             float value = fmax(distance[_lightConfig.axis] / _lightConfig.radius, 0.01f);
 
-            value = (powf(5.0f, value)-1.0f) / 4.0f;
+            value = fmin(1.0f, (powf(5.0f, value)-1.0f) / 4.0f);
 
             //float hue =
 
