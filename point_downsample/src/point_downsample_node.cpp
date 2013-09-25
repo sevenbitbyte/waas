@@ -145,9 +145,9 @@ int main(int argc, char** argv){
     _lightConfig.end.offset = 3*32;
     _lightConfig.end.universe = 1;
 
-    _lightConfig.radius = 0.6f;
-    _lightConfig.spacing = 0.2032f; //8in in meters
-    _lightConfig.shift = 2.8f;      //2.5 meters
+    _lightConfig.radius = 0.5f;
+    _lightConfig.spacing = 0.2286f; //9in in meters
+    _lightConfig.shift = 2.9f;      //2.5 meters
     _lightConfig.axis = 2;
 
     _ola = new OlaManager();
