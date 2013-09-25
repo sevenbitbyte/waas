@@ -145,7 +145,7 @@ int main(int argc, char** argv){
     _lightConfig.end.offset = 3*32;
     _lightConfig.end.universe = 1;
 
-    _lightConfig.radius = 0.75f;
+    _lightConfig.radius = 0.2f;
     _lightConfig.spacing = 0.2286f; //9in in meters
     _lightConfig.shift = 2.9f;      //2.5 meters
     _lightConfig.axis = 2;
