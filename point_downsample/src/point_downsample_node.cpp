@@ -41,6 +41,9 @@
 #include "point_downsample/SetPosition.h"
 #include "point_downsample/SetOrientation.h"
 
+#include <QtGui>
+#include "olamanager.h"
+
 ros::NodeHandlePtr _nhPtr;
 
 ros::Publisher _pointsPub;
@@ -79,6 +82,39 @@ void updateTransform();
 
 visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxValue[3], float minValue[3], int id);
 
+struct point3d {
+    point3d(float values[3]){
+        data[0]=values[0];
+        data[1]=values[1];
+        data[2]=values[2];
+    }
+
+    union{
+        float data[4];
+        struct {
+          float x;
+          float y;
+          float z;
+        };
+    };
+};
+
+struct light_config{
+    float shift;
+    float spacing;
+    float radius;
+    int axis;
+    DmxAddress origin;
+    DmxAddress end;
+};
+
+OlaManager* _ola;
+light_config _lightConfig;
+
+float getDistance(light_config& config, DmxAddress& address, point3d& point);
+void updateLights(vector<point3d> centroids);
+
+
 int main(int argc, char** argv){
     ros::init (argc, argv, "point_downsample");
     _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
@@ -104,6 +140,17 @@ int main(int argc, char** argv){
     //Load settings from parameters
     _kinectPosition.z = 1.5;
 
+    _lightConfig.origin.offset = 0;
+    _lightConfig.origin.universe = 0;
+    _lightConfig.end.offset = 3*32;
+    _lightConfig.end.universe = 0;
+
+    _lightConfig.radius = 0.3f;
+    _lightConfig.spacing = 0.2032f; //8in in meters
+    _lightConfig.shift = 2.5f;      //2.5 meters
+    _lightConfig.axis = 0;
+
+    _ola = new OlaManager();
 
     ros::spin();
 }
@@ -193,7 +240,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
         ec.setClusterTolerance (0.15f);
-        ec.setMinClusterSize (100);
+        ec.setMinClusterSize (60);
         ec.setMaxClusterSize (2000);
         ec.setSearchMethod (tree);
         ec.setInputCloud ( foregroundCloud.makeShared() );
@@ -202,6 +249,8 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         std::cout << cluster_indices.size() << " clusters" << std::endl;
 
         int index=0;
+
+        vector<point3d> centroids;
 
         for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
 
@@ -228,10 +277,14 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
                 centroid[i] = centroid[i] / it->indices.size();
             }
 
+            centroids.push_back( (point3d) centroid );
+
             visualization_msgs::MarkerArrayPtr markers = generateMarkers(centroid, maxValues, minValues, index++);
 
             _visualizerPub.publish(markers);
         }
+
+        updateLights(centroids);
     }
 
     /*TODO:
@@ -368,4 +421,37 @@ visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxV
     markerArray->markers.push_back(boundsMarker);
 
     return markerArray;
+}
+
+
+float getDistance(light_config& config, DmxAddress& address, point3d& point){
+    int dmxDelta = config.origin.getGlobalOffset() - address.getGlobalOffset();
+
+    float lightPos = (((float)dmxDelta) * config.spacing) + config.shift;
+
+    return lightPos - point.data[ config.axis ];
+}
+
+
+void updateLights(vector<point3d> centroids){
+
+    float radiusSq = _lightConfig.radius * _lightConfig.radius;
+    DmxAddress currentAddress = _lightConfig.origin;
+
+    while(currentAddress.offset < _lightConfig.end.offset){ //For each light
+
+        float force[3] = {0.0f, 0.0f, 0.0f};
+
+        for(int i=0; i<centroids.size(); i++){  //For each blob
+            float range = getDistance(_lightConfig, currentAddress, centroids[i]);
+
+            force[_lightConfig.axis] += fabs( range / radiusSq );
+        }
+
+        QColor color = QColor::fromHsv(0, 0, force[_lightConfig.axis]);
+
+        _ola->setPixel(currentAddress, color);
+
+        currentAddress.offset += 3;
+    }
 }

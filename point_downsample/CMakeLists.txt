@@ -61,6 +61,15 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
+#find QT libraries
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Gui REQUIRED)
+find_package(Qt5Sql REQUIRED)
+find_package(Qt5Network REQUIRED)
+
+# Instruct CMake to run moc automatically when needed.
+set(CMAKE_AUTOMOC ON)
+
 ###########
 ## Build ##
 ###########
@@ -69,6 +78,9 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(include
   ${catkin_INCLUDE_DIRS}
+  ${Qt5Core_INCLUDE_DIRS}
+  ${Qt5Network_INCLUDE_DIRS}
+  ${Qt5Sql_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -77,7 +89,7 @@ include_directories(include
 # )
 
 ## Declare a cpp executable
-add_executable(point_downsample_node src/point_downsample_node.cpp)
+add_executable(point_downsample_node src/point_downsample_node.cpp src/utils.cpp src/olamanager.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -86,7 +98,12 @@ add_executable(point_downsample_node src/point_downsample_node.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(point_downsample_node
   ${catkin_LIBRARIES}
+  ola
+  olacommon
+  protobuf
 )
+
+qt5_use_modules(point_downsample_node Core Gui Sql Network)
 
 #############
 ## Install ##
