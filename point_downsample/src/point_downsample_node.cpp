@@ -210,7 +210,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     std::cout << "Conversion done" << std::endl;
 
 
-    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.1f);
+    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.2f);
     octree.setInputCloud(backgroundCloud);
     octree.addPointsFromInputCloud();
 
@@ -252,7 +252,9 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         int index=0;
 
+        pcl::PointCloud<pcl::PointXYZ> clusterCloud;
 
+        //clusterCloud.insert()
 
         for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
 
