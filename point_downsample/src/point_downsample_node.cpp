@@ -145,7 +145,7 @@ int main(int argc, char** argv){
     _lightConfig.end.offset = 3*32;
     _lightConfig.end.universe = 1;
 
-    _lightConfig.radius = 0.3f;
+    _lightConfig.radius = 1.5f;
     _lightConfig.spacing = 0.2032f; //8in in meters
     _lightConfig.shift = 2.5f;      //2.5 meters
     _lightConfig.axis = 0;
@@ -427,16 +427,15 @@ visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxV
 
 
 float getDistance(light_config& config, DmxAddress& address, point3d& point){
-    int dmxDelta = config.origin.getGlobalOffset() - address.getGlobalOffset();
+    int dmxDelta = (config.origin.getGlobalOffset() - address.getGlobalOffset()) / 3.0f;
 
     float lightPos = (((float)dmxDelta) * config.spacing) + config.shift;
 
-    return lightPos - point.data[ config.axis ];
+    return point.data[ config.axis ] - lightPos;
 }
 
 
 void updateLights(vector<point3d> centroids){
-
     float radiusSq = _lightConfig.radius * _lightConfig.radius;
     DmxAddress currentAddress = _lightConfig.origin;
 
@@ -452,7 +451,7 @@ void updateLights(vector<point3d> centroids){
             force[_lightConfig.axis] += fabs( range / radiusSq );
         }
 
-        QColor color = QColor::fromHsv(0, 0, force[_lightConfig.axis]);
+        QColor color = QColor::fromHsv(0.0f, 1.0f, force[_lightConfig.axis]);
 
         _ola->setPixel(currentAddress, color);
 
