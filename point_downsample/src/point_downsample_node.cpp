@@ -141,9 +141,9 @@ int main(int argc, char** argv){
     _kinectPosition.z = 1.5;
 
     _lightConfig.origin.offset = 0;
-    _lightConfig.origin.universe = 0;
+    _lightConfig.origin.universe = 1;
     _lightConfig.end.offset = 3*32;
-    _lightConfig.end.universe = 0;
+    _lightConfig.end.universe = 1;
 
     _lightConfig.radius = 0.3f;
     _lightConfig.spacing = 0.2032f; //8in in meters
@@ -230,6 +230,8 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     std::cout << "Filtering complete original=" << pclCloud->points.size() << " foreground=" << foregroundCloud.points.size() << std::endl;
 
+    vector<point3d> centroids;
+
     if(foregroundCloud.points.size() > 0){
         // Creating the KdTree object for the search method of the extraction
         pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
@@ -250,7 +252,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         int index=0;
 
-        vector<point3d> centroids;
+
 
         for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
 
@@ -283,9 +285,9 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
             _visualizerPub.publish(markers);
         }
-
-        updateLights(centroids);
     }
+
+    updateLights(centroids);
 
     /*TODO:
      *  -Ground plane detection

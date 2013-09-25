@@ -74,6 +74,9 @@ set(CMAKE_AUTOMOC ON)
 ## Build ##
 ###########
 
+include(FindProtobuf)
+find_package(Protobuf REQUIRED)
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(include
@@ -81,7 +84,9 @@ include_directories(include
   ${Qt5Core_INCLUDE_DIRS}
   ${Qt5Network_INCLUDE_DIRS}
   ${Qt5Sql_INCLUDE_DIRS}
+  ${PROTOBUF_INCLUDE_DIR}
 )
+
 
 ## Declare a cpp library
 # add_library(point_downsample
@@ -100,7 +105,7 @@ target_link_libraries(point_downsample_node
   ${catkin_LIBRARIES}
   ola
   olacommon
-  protobuf
+  ${PROTOBUF_LIBRARY}
 )
 
 qt5_use_modules(point_downsample_node Core Gui Sql Network)
