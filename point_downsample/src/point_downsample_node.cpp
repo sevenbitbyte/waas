@@ -443,23 +443,30 @@ void updateLights(vector<point3d> centroids){
 
     while(currentAddress.offset < _lightConfig.end.offset){ //For each light
 
-        float force[3] = {0.0f, 0.0f, 0.0f};
+        float distance[3] = {-1.0f, -1.0f, -1.0f};
 
         for(int i=0; i<centroids.size(); i++){  //For each blob
-            float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]) / _lightConfig.radius);
+            float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]));
 
-            //if(range < 4.5f){
-                force[_lightConfig.axis] = fmax(fmin(1.0f, 1.0f / ( range )), force[_lightConfig.axis]);
+            //if(range < distance[_lightConfig.axis] || distance[_lightConfig.axis]==-1.0f) {
+                distance[_lightConfig.axis] = range;
+            //}
             //}
         }
 
-        int value = (int) (fmin(1.0, force[_lightConfig.axis]) );// * 255.0f);
+        if(distance[_lightConfig.axis] > -1.0f){
+            float value = distance[_lightConfig.axis] / _lightConfig.radius;
 
-        QColor color = QColor::fromHsvF(60.0f/360.0f, 0.0f, value);
+            //float hue =
 
-        //QColor color(value, value, value);
+            QColor color = QColor::fromHsvF(60.0f/360.0f, 0.0f, value);
 
-        _ola->setPixel(currentAddress, color);
+            //QColor color(value, value, value);
+
+            _ola->setPixel(currentAddress, color);
+        }
+
+
 
         currentAddress.offset += 3;
     }
