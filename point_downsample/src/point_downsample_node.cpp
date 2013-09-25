@@ -453,7 +453,7 @@ void updateLights(vector<point3d> centroids){
             }
         }
 
-        qreal value = fmin(1.0, force[_lightConfig.axis]);
+        int value = (int) (fmin(1.0, force[_lightConfig.axis]) * 255.0f);
 
         //QColor color = QColor::fromHsv(0.0f, 1.0f, fmin( force[_lightConfig.axis], 1.0f ));
 
