@@ -446,12 +446,12 @@ void updateLights(vector<point3d> centroids){
         float force[3] = {0.0f, 0.0f, 0.0f};
 
         for(int i=0; i<centroids.size(); i++){  //For each blob
-            float range = getDistance(_lightConfig, currentAddress, centroids[i]);
+            float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]) - _lightConfig.radius);
 
             force[_lightConfig.axis] += fmin(1.0f, 1.0f / ( range * range ));
         }
 
-        QColor color = QColor::fromHsv(0.0f, 1.0f, force[_lightConfig.axis]);
+        QColor color = QColor::fromHsv(0.0f, 1.0f, fmin( force[_lightConfig.axis], 1.0f ));
 
         _ola->setPixel(currentAddress, color);
 
