@@ -145,7 +145,7 @@ int main(int argc, char** argv){
     _lightConfig.end.offset = 3*32;
     _lightConfig.end.universe = 1;
 
-    _lightConfig.radius = 0.08f * 6.0f;
+    _lightConfig.radius = 0.1f * 6.0f;
     _lightConfig.spacing = 0.2286f; //9in in meters
     _lightConfig.shift = 2.9f;      //2.5 meters
     _lightConfig.axis = 2;
@@ -455,7 +455,7 @@ void updateLights(vector<point3d> centroids){
 
         int value = (int) (fmin(1.0, force[_lightConfig.axis]) );// * 255.0f);
 
-        QColor color = QColor::fromHsvF(value, 1.0f, 1.0f);
+        QColor color = QColor::fromHsvF(1.0f, 1.0f, value);
 
         //QColor color(value, value, value);
 
