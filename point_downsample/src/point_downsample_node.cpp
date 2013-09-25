@@ -449,7 +449,7 @@ void updateLights(vector<point3d> centroids){
             float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]) / _lightConfig.radius);
 
             //if(range < 1.0f){
-                force[_lightConfig.axis] += fmin(1.0f, 1.0f / ( range * range ));
+                force[_lightConfig.axis] += fmin(1.0f, 1.0f / 4*( range * range ));
             //}
         }
 
