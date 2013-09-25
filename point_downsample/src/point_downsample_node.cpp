@@ -455,9 +455,9 @@ void updateLights(vector<point3d> centroids){
 
         int value = (int) (fmin(1.0, force[_lightConfig.axis]) * 255.0f);
 
-        //QColor color = QColor::fromHsv(0.0f, 1.0f, fmin( force[_lightConfig.axis], 1.0f ));
+        QColor color = QColor::fromHsv(value, 1.0f, value);
 
-        QColor color(value, value, value);
+        //QColor color(value, value, value);
 
         _ola->setPixel(currentAddress, color);
 
