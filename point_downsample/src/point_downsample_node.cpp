@@ -148,7 +148,7 @@ int main(int argc, char** argv){
     _lightConfig.radius = 1.5f;
     _lightConfig.spacing = 0.2032f; //8in in meters
     _lightConfig.shift = 2.5f;      //2.5 meters
-    _lightConfig.axis = 0;
+    _lightConfig.axis = 2;
 
     _ola = new OlaManager();
 
@@ -427,7 +427,7 @@ visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxV
 
 
 float getDistance(light_config& config, DmxAddress& address, point3d& point){
-    int dmxDelta = (config.origin.getGlobalOffset() - address.getGlobalOffset()) / 3.0f;
+    int dmxDelta = (address.getGlobalOffset() - config.origin.getGlobalOffset()) / 3.0f;
 
     float lightPos = (((float)dmxDelta) * config.spacing) + config.shift;
 
@@ -436,7 +436,7 @@ float getDistance(light_config& config, DmxAddress& address, point3d& point){
 
 
 void updateLights(vector<point3d> centroids){
-    float radiusSq = _lightConfig.radius * _lightConfig.radius;
+    //float radiusSq = _lightConfig.radius * _lightConfig.radius;
     DmxAddress currentAddress = _lightConfig.origin;
 
     _ola->blackout();
@@ -448,7 +448,7 @@ void updateLights(vector<point3d> centroids){
         for(int i=0; i<centroids.size(); i++){  //For each blob
             float range = getDistance(_lightConfig, currentAddress, centroids[i]);
 
-            force[_lightConfig.axis] += fabs( range / radiusSq );
+            force[_lightConfig.axis] += fmin(1.0f, 1.0f / ( range * range ));
         }
 
         QColor color = QColor::fromHsv(0.0f, 1.0f, force[_lightConfig.axis]);
