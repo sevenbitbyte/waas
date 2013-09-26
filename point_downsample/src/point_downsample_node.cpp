@@ -500,7 +500,7 @@ void updateLights(vector<point3d> centroids){
                 saturation = 1.0f;
 
                 if(value < 0.0f){
-                    value = (hue / 2.0f) + 0.5f;
+                    value = (hue /  2.0f) + 0.5f;
                 }
             }
 
