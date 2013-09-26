@@ -482,7 +482,7 @@ void updateLights(vector<point3d> centroids){
 
 
 
-            _ola->setPixel(currentAddress, color, 0.33f);
+            _ola->setPixel(currentAddress, color, 0.05f);
         }
 
 
