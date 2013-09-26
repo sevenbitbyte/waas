@@ -491,12 +491,12 @@ void updateLights(vector<point3d> centroids){
             if(mostNeg != 0.0f && mostPos != 0.0f){
                 ros::Time now = ros::Time::now();
                 uint64_t ms = now.toNSec() / 1000000;
-                ms = ms % 1000;
+                ms = ms % 6000;
 
                 float width = mostPos + fabs(mostNeg);
                 float position = (mostPos + mostNeg) / width;
 
-                hue = fabsf( sinf(  ((((float)ms) / 1000.0f) *2* M_PI) + position ) );
+                hue = fabsf( sinf(  ((((float)ms) / 6000.0f) *2* M_PI) + position ) );
                 saturation = 1.0f;
             }
 
