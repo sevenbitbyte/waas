@@ -496,7 +496,7 @@ void updateLights(vector<point3d> centroids){
                 float width = mostPos + fabs(mostNeg);
                 float position = (mostPos + mostNeg) / width;
 
-                hue = fabsf( sinf(  (((float)ms) / 1000.0f) + position ) );
+                hue = fabsf( sinf(  ((((float)ms) / 1000.0f) *2* M_PI) + position ) );
                 saturation = 1.0f;
             }
 
