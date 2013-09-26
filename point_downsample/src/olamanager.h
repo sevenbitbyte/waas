@@ -20,7 +20,7 @@ class OlaManager : public QObject
         void updateBuffers(QMap<int,ola::DmxBuffer> data);
         void updateBuffer(int universe, ola::DmxBuffer& data);
 
-        void setPixel(DmxAddress address, QColor color);
+        void setPixel(DmxAddress address, QColor color, qreal weight=1.0f);
 
         ola::DmxBuffer* getBuffer(int universe);
 

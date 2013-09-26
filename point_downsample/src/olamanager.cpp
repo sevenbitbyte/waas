@@ -70,10 +70,23 @@ ola::DmxBuffer* OlaManager::getBuffer(int universe){
     return buffer;
 }
 
-void OlaManager::setPixel(DmxAddress address, QColor color){
+void OlaManager::setPixel(DmxAddress address, QColor color, qreal weight){
     ola::DmxBuffer* buffer = getBuffer(address.universe);
 
-    uint8_t colorData[3] = {color.red(), color.green(), color.blue()};
+    uint8_t colorData[3];
+
+    if(weight < 1.0f){
+        //buffer->GetRange(address.offset, colorData, 3);
+
+        colorData[0] = (color.red() * weight) + (buffer->Get(address.offset) * (1.0f-weight) );
+        colorData[1] = (color.green() * weight) + (buffer->Get(address.offset+1) * (1.0f-weight) );
+        colorData[2] = (color.blue() * weight) + (buffer->Get(address.offset+2) * (1.0f-weight) );
+    }
+    else{
+        colorData[0] = color.red();
+        colorData[1] = color.green();
+        colorData[2] =  color.blue();
+    }
 
     buffer->SetRange(address.offset, colorData, 3);
 }

@@ -244,7 +244,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
         ec.setClusterTolerance (0.12f);
-        ec.setMinClusterSize (60);
+        ec.setMinClusterSize (100);
         ec.setMaxClusterSize (2000);
         ec.setSearchMethod (tree);
         ec.setInputCloud ( foregroundCloud.makeShared() );
@@ -456,18 +456,21 @@ void updateLights(vector<point3d> centroids){
 
     while(currentAddress.offset < _lightConfig.end.offset){ //For each light
 
-        float distance[3] = {-1.0f, -1.0f, -1.0f};
+        int nearestBlobIdx = 0;
+        float nearestHeight = 0.0f;
+        float minDistance[3] = {-1.0f, -1.0f, -1.0f};
+        float maxDistance[3] = {0.0f, 0.0f, 0.0f};
 
         for(int i=0; i<centroids.size(); i++){  //For each blob
             float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]));
 
-            if(range < distance[_lightConfig.axis] || distance[_lightConfig.axis]==-1.0f) {
-                distance[_lightConfig.axis] = range;
+            if(range < minDistance[_lightConfig.axis] || minDistance[_lightConfig.axis]==-1.0f) {
+                minDistance[_lightConfig.axis] = range;
             }
         }
 
-        if(distance[_lightConfig.axis] > -1.0f){
-            float value = fmax(distance[_lightConfig.axis] / _lightConfig.radius, 0.01f);
+        if(minDistance[_lightConfig.axis] > -1.0f){
+            float value = fmax(minDistance[_lightConfig.axis] / _lightConfig.radius, 0.01f);
 
             value = fmin(1.0f, (powf(5.0f, value)-1.0f) / 4.0f);
 
@@ -477,7 +480,9 @@ void updateLights(vector<point3d> centroids){
 
             //QColor color(value, value, value);
 
-            _ola->setPixel(currentAddress, color);
+
+
+            _ola->setPixel(currentAddress, color, 0.33f);
         }
 
 
