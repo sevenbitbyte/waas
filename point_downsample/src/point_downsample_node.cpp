@@ -496,12 +496,14 @@ void updateLights(vector<point3d> centroids){
                 float width = mostPos + fabs(mostNeg);
                 float position = (mostPos + mostNeg) / width;
 
-                hue = fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) );
-                saturation = 1.0f;
-
-                if(value < 0.0f){
-                    value = (hue /  2.0f) + 0.5f;
+                if(width > _lightConfig.radius){
+                    hue = fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) );
+                    saturation = 1.0f;
                 }
+
+                /*if(value < 0.0f){
+                    value = (hue /  2.0f) + 0.5f;
+                }*/
             }
 
             QColor color = QColor::fromHsvF(hue, saturation, 1.0f-value);
