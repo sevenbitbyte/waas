@@ -480,15 +480,16 @@ void updateLights(vector<point3d> centroids){
             }
         }
 
-        if(minDistance[_lightConfig.axis] > -1.0f || (mostNeg != 0.0f && mostPos != 0.0f)){
-            float value = fmax(minDistance[_lightConfig.axis] / _lightConfig.radius, 0.01f);
+        if(minDistance[_lightConfig.axis] > -1.0f /*|| (mostNeg != 0.0f && mostPos != 0.0f)*/){
+            float radiusPercent = fmax(minDistance[_lightConfig.axis] / _lightConfig.radius, 0.01f);
 
-            value = fmin(1.0f, (powf(5.0f, value)-1.0f) / 4.0f);
+
+            float value = fmin(1.0f, (powf(5.0f, radiusPercent)-1.0f) / 4.0f);
 
             float saturation = value;
             float hue = value;
 
-            if(mostNeg != 0.0f && mostPos != 0.0f){
+            if(mostNeg != 0.0f && mostPos != 0.0f && radiusPercent < 1.0f){
                 ros::Time now = ros::Time::now();
                 uint64_t ms = now.toNSec() / 1000000;
                 ms = ms % 3000;
@@ -496,10 +497,10 @@ void updateLights(vector<point3d> centroids){
                 float width = mostPos + fabs(mostNeg);
                 float position = (mostPos + mostNeg) / width;
 
-                if(width < _lightConfig.radius){
+                //if(width < _lightConfig.radius){
                     hue = fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) );
                     saturation = 1.0f;
-                }
+                //}
 
                 /*if(value < 0.0f){
                     value = (hue /  2.0f) + 0.5f;
