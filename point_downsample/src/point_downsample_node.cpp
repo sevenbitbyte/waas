@@ -489,7 +489,7 @@ void updateLights(vector<point3d> centroids){
             float saturation = value;
             float hue = value;
 
-            if(mostNeg != 0.0f && mostPos != 0.0f && radiusPercent < 1.0f){
+            if(mostNeg != 0.0f && mostPos != 0.0f && radiusPercent < 0.5f){
                 ros::Time now = ros::Time::now();
                 uint64_t ms = now.toNSec() / 1000000;
                 ms = ms % 3000;
