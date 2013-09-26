@@ -492,7 +492,10 @@ void updateLights(vector<point3d> centroids){
                 uint64_t ms = now.toNSec() / 1000000;
                 ms = ms % 1000;
 
-                value = sinf(  ((float)ms) / 1000.0f );
+                float width = mostPos + fabs(mostNeg);
+                float position = (mostPos + mostNeg) / width;
+
+                value = sinf(  (((float)ms) / 1000.0f) + position );
                 saturation = 1.0f - saturation;
             }
 
