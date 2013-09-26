@@ -511,7 +511,7 @@ void updateLights(vector<point3d> centroids){
 
             //QColor color(value, value, value);
 
-            _ola->setPixel(currentAddress, color, 0.5f);
+            _ola->setPixel(currentAddress, color, 0.3f);
         }
 
 
