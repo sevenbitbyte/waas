@@ -459,10 +459,21 @@ void updateLights(vector<point3d> centroids){
         int nearestBlobIdx = 0;
         float nearestHeight = 0.0f;
         float minDistance[3] = {-1.0f, -1.0f, -1.0f};
-        float maxDistance[3] = {0.0f, 0.0f, 0.0f};
+
+        float mostNeg = 0.0f;
+        float mostPos = 0.0f;
 
         for(int i=0; i<centroids.size(); i++){  //For each blob
-            float range = fabs(getDistance(_lightConfig, currentAddress, centroids[i]));
+            float range = getDistance(_lightConfig, currentAddress, centroids[i]);
+
+            if(range < 0.0f && (range > mostNeg || mostNeg == 0.0f)){
+                mostNeg = range;
+            }
+            if(range > 0.0f && (range < mostPos || mostPos == 0.0f)){
+                mostPos = range;
+            }
+
+            range = fabs(range);
 
             if(range < minDistance[_lightConfig.axis] || minDistance[_lightConfig.axis]==-1.0f) {
                 minDistance[_lightConfig.axis] = range;
@@ -474,15 +485,22 @@ void updateLights(vector<point3d> centroids){
 
             value = fmin(1.0f, (powf(5.0f, value)-1.0f) / 4.0f);
 
-            //float hue =
+            float saturation = value;
 
-            QColor color = QColor::fromHsvF(value, value, 1.0f-value);
+            if(mostNeg != 0.0f && mostPos != 0.0f){
+                ros::Time now = ros::Time::now();
+                uint64_t ms = now.toNSec() / 1000000;
+                ms = ms % 1000;
+
+                value = sinf(  ((float)ms) / 1000.0f );
+                saturation = 1.0f - saturation;
+            }
+
+            QColor color = QColor::fromHsvF(value, saturation, 1.0f-value);
 
             //QColor color(value, value, value);
 
-
-
-            _ola->setPixel(currentAddress, color, 0.05f);
+            _ola->setPixel(currentAddress, color, 0.5f);
         }
 
 
