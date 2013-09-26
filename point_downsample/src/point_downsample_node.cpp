@@ -480,7 +480,7 @@ void updateLights(vector<point3d> centroids){
             }
         }
 
-        if(minDistance[_lightConfig.axis] > -1.0f){
+        if(minDistance[_lightConfig.axis] > -1.0f || (mostNeg != 0.0f && mostPos != 0.0f)){
             float value = fmax(minDistance[_lightConfig.axis] / _lightConfig.radius, 0.01f);
 
             value = fmin(1.0f, (powf(5.0f, value)-1.0f) / 4.0f);
