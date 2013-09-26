@@ -491,13 +491,17 @@ void updateLights(vector<point3d> centroids){
             if(mostNeg != 0.0f && mostPos != 0.0f){
                 ros::Time now = ros::Time::now();
                 uint64_t ms = now.toNSec() / 1000000;
-                ms = ms % 6000;
+                ms = ms % 3000;
 
                 float width = mostPos + fabs(mostNeg);
                 float position = (mostPos + mostNeg) / width;
 
-                hue = fabsf( sinf(  ((((float)ms) / 6000.0f) *2* M_PI) + position ) );
+                hue = fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) );
                 saturation = 1.0f;
+
+                if(value < 0.0f){
+                    value = (hue / 2.0f) + 0.5f;
+                }
             }
 
             QColor color = QColor::fromHsvF(hue, saturation, 1.0f-value);
