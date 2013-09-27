@@ -488,6 +488,7 @@ void updateLights(vector<point3d> centroids){
 
             if(range < minDistance[_lightConfig.axis] || minDistance[_lightConfig.axis]==-1.0f) {
                 minDistance[_lightConfig.axis] = range;
+                nearestHeight = centroids[i].data[0];
             }
         }
 
@@ -509,7 +510,7 @@ void updateLights(vector<point3d> centroids){
                 float position = (mostPos + mostNeg) / width;
 
                 if(width < (_lightConfig.radius/0.5f)) {
-                    hue = fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) );
+                    hue = (fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) ) + hue) * 0.5f;
                     saturation = 1.0f;
                 }
             }
