@@ -212,7 +212,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         //if(octree.getInputCloud()
 
-        octree.deleteCurrentBuffer();
+        //octree.deleteCurrentBuffer();
         octree.setInputCloud(backgroundCloud);
         octree.addPointsFromInputCloud();
 
