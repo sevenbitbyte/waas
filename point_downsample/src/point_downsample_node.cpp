@@ -172,6 +172,7 @@ void imuCallback(const sensor_msgs::Imu::ConstPtr& imuMsg) {
     */
 }
 
+pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.2f);
 pcl::PointCloud<pcl::PointXYZ>::Ptr backgroundCloud;
 sensor_msgs::PointCloud2 backgroundSensor;
 
@@ -197,27 +198,28 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     downsample.setLeafSize(leafSize, leafSize, leafSize);
     downsample.filter(downSampledInput);
 
-    std::cout << "Input cloud size " << input->data.size() << ", downsampled size " << downSampledInput.data.size() <<  std::endl;
+
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud( new pcl::PointCloud<pcl::PointXYZ> );
     pcl::fromROSMsg (downSampledInput, *pclCloud);
 
     if(backgroundCloud.get() == NULL) {
+        std::cout << "Background cloud size " << input->data.size() << ", downsampled size " << downSampledInput.data.size() <<  std::endl;
         backgroundCloud = pclCloud;
         pcl::toROSMsg(*backgroundCloud, backgroundSensor);
 
         _backgroundPub.publish(backgroundSensor);
+
+        octree.deleteCurrentBuffer();
+        octree.setInputCloud(backgroundCloud);
+        octree.addPointsFromInputCloud();
+
+        octree.switchBuffers();
+
+        std::cout << "Octree ready" << std::endl;
     }
 
-    std::cout << "Conversion done" << std::endl;
-
-
-    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.2f);
-    octree.setInputCloud(backgroundCloud);
-    octree.addPointsFromInputCloud();
-
-    octree.switchBuffers();
-
+    octree.deleteCurrentBuffer();
     octree.setInputCloud(pclCloud);
     octree.addPointsFromInputCloud();
 
@@ -230,7 +232,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     pcl::PointCloud<pcl::PointXYZ> foregroundCloud(*pclCloud, newPointIdxVector);
 
-    std::cout << "Filtering complete original=" << pclCloud->points.size() << " foreground=" << foregroundCloud.points.size() << std::endl;
+    //std::cout << "Filtering complete original=" << pclCloud->points.size() << " foreground=" << foregroundCloud.points.size() << std::endl;
 
     vector<point3d> centroids;
 
@@ -239,7 +241,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
         tree->setInputCloud ( foregroundCloud.makeShared() );
 
-        std::cout << "Foreground KdTree ready" << std::endl;
+        //std::cout << "Foreground KdTree ready" << std::endl;
 
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
@@ -250,7 +252,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         ec.setInputCloud ( foregroundCloud.makeShared() );
         ec.extract (cluster_indices);
 
-        std::cout << cluster_indices.size() << " clusters" << std::endl;
+        //std::cout << cluster_indices.size() << " clusters" << std::endl;
 
         int index=0;
 
@@ -501,15 +503,9 @@ void updateLights(vector<point3d> centroids){
                     hue = fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) );
                     saturation = 1.0f;
                 }
-
-                /*if(value < 0.0f){
-                    value = (hue /  2.0f) + 0.5f;
-                }*/
             }
 
             QColor color = QColor::fromHsvF(hue, saturation, 1.0f-value);
-
-            //QColor color(value, value, value);
 
             _ola->setPixel(currentAddress, color, 0.3f);
         }
