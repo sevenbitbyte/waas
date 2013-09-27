@@ -488,7 +488,7 @@ void updateLights(vector<point3d> centroids){
 
             if(range < minDistance[_lightConfig.axis] || minDistance[_lightConfig.axis]==-1.0f) {
                 minDistance[_lightConfig.axis] = range;
-                nearestHeight = fabsf(centroids[i].data[0] + 0.8f);
+                nearestHeight = fabsf(centroids[i].data[1] + 0.8f);
             }
         }
 
