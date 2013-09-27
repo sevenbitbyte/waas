@@ -235,7 +235,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     pcl::PointCloud<pcl::PointXYZ> foregroundCloud(*pclCloud, newPointIdxVector);
 
-    float foregroundPerecent = (float)foregroundCloud.points.size / (float)backgroundCloud->points.size();
+    float foregroundPerecent = (float)foregroundCloud.points.size() / (float)backgroundCloud->points.size();
 
     if(foregroundPerecent > 0.3){
         backgroundCloud.reset();
