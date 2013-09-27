@@ -498,7 +498,7 @@ void updateLights(vector<point3d> centroids){
 
             float value = fmin(1.0f, (powf(5.0f, radiusPercent)-1.0f) / 4.0f);
 
-            float saturation = value;
+            float saturation = (value * 0.5f) + (0.5f * (nearestHeight / 1.5));
             float hue = value;
 
             if(mostNeg != 0.0f && mostPos != 0.0f){
