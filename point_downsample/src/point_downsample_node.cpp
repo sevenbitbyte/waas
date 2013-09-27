@@ -210,6 +210,8 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         _backgroundPub.publish(backgroundSensor);
 
+        //if(octree.getInputCloud()
+
         octree.deleteCurrentBuffer();
         octree.setInputCloud(backgroundCloud);
         octree.addPointsFromInputCloud();
@@ -219,7 +221,6 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         std::cout << "Octree ready" << std::endl;
     }
 
-    octree.deleteCurrentBuffer();
     octree.setInputCloud(pclCloud);
     octree.addPointsFromInputCloud();
 
