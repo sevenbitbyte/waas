@@ -147,7 +147,7 @@ int main(int argc, char** argv){
     _lightConfig.end.offset = 3*32;
     _lightConfig.end.universe = 1;
 
-    _lightConfig.radius = 1.6;
+    _lightConfig.radius = 0.6;
     _lightConfig.spacing = 0.2286f; //9in in meters
     _lightConfig.shift = 2.9f;      //2.5 meters
     _lightConfig.axis = 2;
@@ -196,8 +196,6 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     downsample.setInputCloud(input);
     downsample.setLeafSize(leafSize, leafSize, leafSize);
     downsample.filter(downSampledInput);
-
-
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud( new pcl::PointCloud<pcl::PointXYZ> );
     pcl::fromROSMsg (downSampledInput, *pclCloud);
