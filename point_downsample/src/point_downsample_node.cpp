@@ -237,7 +237,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     float foregroundPerecent = (float)foregroundCloud.points.size() / (float)backgroundCloud->points.size();
 
-    if(foregroundPerecent > 0.3){
+    if(foregroundPerecent > 0.15){
         backgroundCloud.reset();
         std::cout << "Reseting foreground percent=" << foregroundPerecent << std::endl;
     }
