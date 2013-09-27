@@ -172,7 +172,6 @@ void imuCallback(const sensor_msgs::Imu::ConstPtr& imuMsg) {
     */
 }
 
-pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.2f);
 pcl::PointCloud<pcl::PointXYZ>::Ptr backgroundCloud;
 sensor_msgs::PointCloud2 backgroundSensor;
 
@@ -218,6 +217,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         std::cout << "Octree ready" << std::endl;
     }
 
+    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.2f);
     octree.setInputCloud(backgroundCloud);
     octree.addPointsFromInputCloud();
 
