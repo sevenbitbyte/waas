@@ -484,13 +484,13 @@ void updateLights(vector<point3d> centroids){
     if(effectState != IDLE){
         //Compute time delta, effect perect, and effect radius
         effectDeltaTime = now - effectStartTime;
-        double deltaMs = ((double) effectDeltaTime.toNSec()) / 1000.0f;
+        double deltaMs = ((double) effectDeltaTime.toNSec()) / 1000000.0f;
 
         effectPercent = deltaMs / effectDurationMs;
 
         if(effectPercent > 1.0f){
             effectState = IDLE;
-            std::cout << "Effect Idle" << std::endl;
+            std::cout << "Effect Idle at deltaMs=" << deltaMs << std::endl;
         }
         else{
 
@@ -547,13 +547,13 @@ void updateLights(vector<point3d> centroids){
             float saturation = (nearestHeight / 1.3f);  //Scale saturation with height, shorting things have highest saturation
             float hue = value;
 
-            if(nearestHeight > 0.8f && effectState == IDLE){
+            if(nearestHeight < 0.8f && effectState == IDLE){
                 effectState = EXPANDING;
                 effectPercent = 0.0f;
                 effectPos = minDistance[_lightConfig.axis];
                 effectStartTime = now;
 
-                std::cout << "Effect triggered, height="<<nearestHeight << std::endl;
+                std::cout << "Effect triggered, height="<< nearestHeight << " at pos=" << effectPos std::endl;
             }
 
             if(mostNeg != 0.0f && mostPos != 0.0f){
