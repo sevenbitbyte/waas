@@ -553,7 +553,7 @@ void updateLights(vector<point3d> centroids){
                 effectPos = minDistance[_lightConfig.axis];
                 effectStartTime = now;
 
-                std::cout << "Effect triggered, height="<< nearestHeight << " at pos=" << effectPos std::endl;
+                std::cout << "Effect triggered, height="<< nearestHeight << " at pos=" << effectPos << std::endl;
             }
 
             if(mostNeg != 0.0f && mostPos != 0.0f){
