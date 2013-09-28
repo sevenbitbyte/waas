@@ -112,6 +112,7 @@ struct light_config{
 OlaManager* _ola;
 light_config _lightConfig;
 
+float getValueByRange(float upper, float lower, float percent, bool reverse=false);
 float getDistance(light_config& config, DmxAddress& address, point3d& point);
 void updateLights(vector<point3d> centroids);
 
@@ -459,11 +460,55 @@ float getDistance(light_config& config, DmxAddress& address, point3d& point){
 }
 
 
+enum EffectStates { IDLE, EXPANDING, FADING };
+int effectState = IDLE;
+double effectPos=0.0f;
+double effectRadius = 0.0f;
+double maxEffectRadius = 3.0f;
+double effectDurationMs = 500.0f;
+double effectExpandCutoffPercent = 0.8f;
+double effectPercent = 0.0f;
+double effectStatePercent = 0.0f;   //! Percent complete of current effectState
+//double effectLowerBound;
+//double effectUpperBound;
+ros::Time effectStartTime;
+ros::Duration effectDeltaTime;
+
 void updateLights(vector<point3d> centroids){
     //float radiusSq = _lightConfig.radius * _lightConfig.radius;
     DmxAddress currentAddress = _lightConfig.origin;
 
     _ola->blackout();
+    ros::Time now = ros::Time::now();
+
+    if(effectState != IDLE){
+        //Compute time delta, effect perect, and effect radius
+        effectDeltaTime = now - effectStartTime;
+        double deltaMs = ((double) effectDeltaTime.toNSec()) / 1000.0f;
+
+        effectPercent = deltaMs / effectDurationMs;
+
+        if(effectPercent > 1.0f){
+            effectState = IDLE;
+        }
+        else{
+
+            if(effectPercent > effectExpandCutoffPercent){
+                //Fade out
+                effectState = FADING;
+                effectStatePercent = (effectPercent - effectExpandCutoffPercent) / (1.0f - effectExpandCutoffPercent);
+                effectRadius = maxEffectRadius;
+            }
+            else{
+                effectState = EXPANDING;
+                effectStatePercent = effectPercent / effectExpandCutoffPercent;
+                effectRadius = effectStatePercent * maxEffectRadius;
+            }
+
+            //effectLowerBound =  effectPos - effectRadius;
+            //effectUpperBound =  effectPos + effectRadius;
+        }
+    }
 
     while(currentAddress.offset < _lightConfig.end.offset){ //For each light
 
@@ -492,17 +537,23 @@ void updateLights(vector<point3d> centroids){
             }
         }
 
-        if(minDistance[_lightConfig.axis] > -1.0f /*|| (mostNeg != 0.0f && mostPos != 0.0f)*/){
+        if(minDistance[_lightConfig.axis] > -1.0f){
             float radiusPercent = fmax(minDistance[_lightConfig.axis] / _lightConfig.radius, 0.01f);
 
 
             float value = fmin(1.0f, (powf(5.0f, radiusPercent)-1.0f) / 4.0f);
 
-            float saturation = (nearestHeight / 1.5f);
+            float saturation = (nearestHeight / 1.3f);  //Scale saturation with height, shorting things have highest saturation
             float hue = value;
 
+            if(nearestHeight > 1.3f && effectState == IDLE){
+                effectState = EXPANDING;
+                effectPercent = 0.0f;
+                effectPos = minDistance[_lightConfig.axis];
+                effectStartTime = now;
+            }
+
             if(mostNeg != 0.0f && mostPos != 0.0f){
-                ros::Time now = ros::Time::now();
                 uint64_t ms = now.toNSec() / 1000000;
                 ms = ms % 3000;
 
@@ -510,8 +561,38 @@ void updateLights(vector<point3d> centroids){
                 float position = (mostPos + mostNeg) / width;
 
                 if(width < (_lightConfig.radius/0.5f)) {
-                    hue = (fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) ) + hue) * 0.5f;
+                    hue = hue * 0.7f;
+                    hue += 0.3f * fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) ) ;
                     saturation = 1.0f;
+                }
+            }
+
+
+            if(effectState == EXPANDING){
+                //Snake out from pos
+                float zero[3] = {0.0f, 0.0f, 0.0f};
+                point3d pt(zero);
+                float lightPos = fabsf( getDistance(_lightConfig, currentAddress, pt) );
+
+                float lightPosEffectPosDelta = fabs(effectPos - lightPos);
+
+                if(lightPosEffectPosDelta < effectRadius){
+                    saturation = 0.0f;
+                    value = 1.0f;
+                }
+            }
+            if(effectState == FADING){
+                float zero[3] = {0.0f, 0.0f, 0.0f};
+                point3d pt(zero);
+                float lightPos = fabsf( getDistance(_lightConfig, currentAddress, pt) );
+
+                float lightPosEffectPosDelta = fabs(effectPos - lightPos);
+
+                //Is this light in the effect radius?
+                if(lightPosEffectPosDelta < effectRadius){
+                    //Scale between 0.0f and saturatation
+                    saturation = getValueByRange(saturation, 0.0f, effectStatePercent);
+                    value = getValueByRange(value, 0.0f, effectStatePercent);
                 }
             }
 
@@ -521,9 +602,21 @@ void updateLights(vector<point3d> centroids){
         }
 
 
-
         currentAddress.offset += 3;
     }
 
     _ola->sendBuffers();
+}
+
+float getValueByRange(float upper, float lower, float percent, bool reverse){
+    float value = (upper - lower) * percent;
+
+    if(reverse){
+        value = upper - value;
+    }
+    else{
+        value = lower + value;
+    }
+
+    return value;
 }
