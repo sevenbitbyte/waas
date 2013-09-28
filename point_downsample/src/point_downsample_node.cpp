@@ -490,6 +490,7 @@ void updateLights(vector<point3d> centroids){
 
         if(effectPercent > 1.0f){
             effectState = IDLE;
+            std::cout << "Effect Idle" << std::endl;
         }
         else{
 
@@ -546,11 +547,13 @@ void updateLights(vector<point3d> centroids){
             float saturation = (nearestHeight / 1.3f);  //Scale saturation with height, shorting things have highest saturation
             float hue = value;
 
-            if(nearestHeight > 1.3f && effectState == IDLE){
+            if(nearestHeight > 0.8f && effectState == IDLE){
                 effectState = EXPANDING;
                 effectPercent = 0.0f;
                 effectPos = minDistance[_lightConfig.axis];
                 effectStartTime = now;
+
+                std::cout << "Effect triggered, height="<<nearestHeight << std::endl;
             }
 
             if(mostNeg != 0.0f && mostPos != 0.0f){
@@ -581,7 +584,7 @@ void updateLights(vector<point3d> centroids){
                     value = 1.0f;
                 }
             }
-            if(effectState == FADING){
+            else if(effectState == FADING){
                 float zero[3] = {0.0f, 0.0f, 0.0f};
                 point3d pt(zero);
                 float lightPos = fabsf( getDistance(_lightConfig, currentAddress, pt) );
