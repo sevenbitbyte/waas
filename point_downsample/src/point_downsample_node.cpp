@@ -551,7 +551,7 @@ void updateLights(vector<point3d> centroids){
             float hue = value;
 
 
-            if(nearestHeight < 0.45f && effectState == IDLE){
+            if(nearestHeight < 0.38f && effectState == IDLE){
                 effectState = EXPANDING;
                 effectPercent = 0.0f;
                 effectPos = centroids[nearestCentroidIdx].data[_lightConfig.axis];
@@ -585,7 +585,7 @@ void updateLights(vector<point3d> centroids){
 
                 if(lightPosEffectPosDelta < effectRadius){
                     saturation = 0.0f;
-                    value = 1.0f;
+                    value = 0.0f;
                 }
             }
             else if(effectState == FADING){
