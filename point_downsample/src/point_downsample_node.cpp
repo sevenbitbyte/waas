@@ -551,7 +551,7 @@ void updateLights(vector<point3d> centroids){
             float hue = value;
 
 
-            if(nearestHeight < 0.8f && effectState == IDLE){
+            if(nearestHeight < 0.45f && effectState == IDLE){
                 effectState = EXPANDING;
                 effectPercent = 0.0f;
                 effectPos = centroids[nearestCentroidIdx].data[_lightConfig.axis];
