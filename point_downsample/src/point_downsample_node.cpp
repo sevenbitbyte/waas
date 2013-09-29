@@ -554,7 +554,7 @@ void updateLights(vector<point3d> centroids){
             float hue = value;
 
 
-            if(nearestHeight < 0.3f && effectState == IDLE && centroids[nearestCentroidIdx].data[_lightConfig.axis] < 6.6f){
+            if(nearestHeight < 0.3f && effectState == IDLE && centroids[nearestCentroidIdx].data[_lightConfig.axis] < 6.35f){
                 effectState = EXPANDING;
                 effectPercent = 0.0f;
                 effectPos = centroids[nearestCentroidIdx].data[_lightConfig.axis];
@@ -593,7 +593,7 @@ void updateLights(vector<point3d> centroids){
                     if(lightPosEffectPosDelta > (effectRadius - 0.8f)){
                         //Draw head in random colors
                         //hue = ((float)rand()/(float)RAND_MAX);
-                        hue = lightPosEffectPosDelta / effectRadius;
+                        hue = (lightPosEffectPosDelta / effectRadius) * 2.0f;
                         saturation = 1.0f;
                     }
                 }
