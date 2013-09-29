@@ -593,7 +593,8 @@ void updateLights(vector<point3d> centroids){
                     if(lightPosEffectPosDelta > (effectRadius - 0.8f)){
                         //Draw head in random colors
                         //hue = ((float)rand()/(float)RAND_MAX);
-                        hue = (lightPosEffectPosDelta / effectRadius) * 2.0f;
+
+                        hue = (lightPosEffectPosDelta / effectRadius) * 0.8f;
                         saturation = 1.0f;
                     }
                 }
