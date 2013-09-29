@@ -466,7 +466,7 @@ double effectPos=0.0f;
 double effectRadius = 0.0f;
 double maxEffectRadius = 6.0f;
 double effectDurationMs = 1000.0f;
-double effectExpandCutoffPercent = 0.5f;
+double effectExpandCutoffPercent = 0.4f;
 double effectPercent = 0.0f;
 double effectStatePercent = 0.0f;   //! Percent complete of current effectState
 //double effectLowerBound;
@@ -590,7 +590,7 @@ void updateLights(vector<point3d> centroids){
                     saturation = 0.0f;
                     value = 0.0f;
 
-                    if(lightPosEffectPosDelta > (effectRadius - 0.6f)){
+                    if(lightPosEffectPosDelta > (effectRadius - 0.3f)){
                         hue = ((float)rand()/(float)RAND_MAX);
                         saturation = 1.0f;
                     }
