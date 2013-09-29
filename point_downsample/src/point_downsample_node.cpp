@@ -570,8 +570,7 @@ void updateLights(vector<point3d> centroids){
                 float width = mostPos + fabs(mostNeg);
                 float position = (mostPos + mostNeg) / width;
 
-                if(width < (_lightConfig.radius/0.6f)) {
-                    //Draw head in random colors
+                if(width < (_lightConfig.radius/0.5f)) {
                     hue = hue * 0.7f;
                     hue += 0.3f * fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) ) ;
                     saturation = 1.0f;
@@ -591,7 +590,8 @@ void updateLights(vector<point3d> centroids){
                     saturation = 0.0f;
                     value = 0.0f;
 
-                    if(lightPosEffectPosDelta > (effectRadius - 0.3f)){
+                    if(lightPosEffectPosDelta > (effectRadius - 0.6f)){
+                        //Draw head in random colors
                         hue = ((float)rand()/(float)RAND_MAX);
                         saturation = 1.0f;
                     }
