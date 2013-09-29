@@ -465,7 +465,7 @@ int effectState = IDLE;
 double effectPos=0.0f;
 double effectRadius = 0.0f;
 double maxEffectRadius = 3.0f;
-double effectDurationMs = 1000.0f;
+double effectDurationMs = 5000.0f;
 double effectExpandCutoffPercent = 0.8f;
 double effectPercent = 0.0f;
 double effectStatePercent = 0.0f;   //! Percent complete of current effectState
@@ -490,6 +490,9 @@ void updateLights(vector<point3d> centroids){
 
         if(effectPercent > 1.0f){
             effectState = IDLE;
+            effectRadius = 0.0f;
+            effectPercent = 0.0f;
+            effectStatePercent = 0.0f;
             std::cout << "Effect Idle at deltaMs=" << deltaMs << std::endl;
         }
         else{
@@ -551,7 +554,7 @@ void updateLights(vector<point3d> centroids){
             float hue = value;
 
 
-            if(nearestHeight < 0.38f && effectState == IDLE){
+            if(nearestHeight < 0.3f && effectState == IDLE){
                 effectState = EXPANDING;
                 effectPercent = 0.0f;
                 effectPos = centroids[nearestCentroidIdx].data[_lightConfig.axis];
