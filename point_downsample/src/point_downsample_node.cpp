@@ -464,9 +464,9 @@ enum EffectStates { IDLE, EXPANDING, FADING };
 int effectState = IDLE;
 double effectPos=0.0f;
 double effectRadius = 0.0f;
-double maxEffectRadius = 7.0f;
-double effectDurationMs = 800.0f;
-double effectExpandCutoffPercent = 0.8f;
+double maxEffectRadius = 6.0f;
+double effectDurationMs = 1000.0f;
+double effectExpandCutoffPercent = 0.5f;
 double effectPercent = 0.0f;
 double effectStatePercent = 0.0f;   //! Percent complete of current effectState
 //double effectLowerBound;
@@ -589,6 +589,10 @@ void updateLights(vector<point3d> centroids){
                 if(lightPosEffectPosDelta < effectRadius){
                     saturation = 0.0f;
                     value = 0.0f;
+
+                    if(lightPosEffectPosDelta < 0.3){
+                        hue = ((float)rand()/(float)RAND_MAX);
+                    }
                 }
             }
             else if(effectState == FADING){
