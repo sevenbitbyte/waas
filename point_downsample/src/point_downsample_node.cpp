@@ -464,8 +464,8 @@ enum EffectStates { IDLE, EXPANDING, FADING };
 int effectState = IDLE;
 double effectPos=0.0f;
 double effectRadius = 0.0f;
-double maxEffectRadius = 3.0f;
-double effectDurationMs = 500.0f;
+double maxEffectRadius = 7.0f;
+double effectDurationMs = 800.0f;
 double effectExpandCutoffPercent = 0.8f;
 double effectPercent = 0.0f;
 double effectStatePercent = 0.0f;   //! Percent complete of current effectState
