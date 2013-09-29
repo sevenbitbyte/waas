@@ -590,7 +590,7 @@ void updateLights(vector<point3d> centroids){
                     saturation = 0.0f;
                     value = 0.0f;
 
-                    if(lightPosEffectPosDelta < 0.3){
+                    if(lightPosEffectPosDelta < 0.6f){
                         hue = ((float)rand()/(float)RAND_MAX);
                     }
                 }
