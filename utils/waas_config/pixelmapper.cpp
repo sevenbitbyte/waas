@@ -22,7 +22,7 @@ PixelMapper::PixelMapper(OlaManager* ola, QObject *parent) :
     _outputLabel = NULL;
     testRun = NULL;
 
-    animationMode = FillWhite;
+    animationMode = Swirl;
 
     //connect(_renderTimer, SIGNAL(timeout()), this, SLOT(render()));
 
