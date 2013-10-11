@@ -4,11 +4,11 @@ PixelMapper::PixelMapper(OlaManager* ola, QObject *parent) :
     QObject(parent)
 {
     _ola = ola;
-    _image = new QImage(32, 6, QImage::Format_RGB32);
+    _image = new QImage(34, 34, QImage::Format_RGB32);
 
     QPainter painter;
 
-    QRect bounds(0,0, 32, 6);
+    QRect bounds(0,0, 34, 34);
     QBrush fillBrush( QColor(255,0,0) );
 
     painter.begin(_image);
@@ -21,6 +21,8 @@ PixelMapper::PixelMapper(OlaManager* ola, QObject *parent) :
 
     _outputLabel = NULL;
     testRun = NULL;
+
+    animationMode = FillWhite;
 
     //connect(_renderTimer, SIGNAL(timeout()), this, SLOT(render()));
 
@@ -68,40 +70,48 @@ void PixelMapper::render(){
             animationStep--;
         }
         else{
+            animationStep = 360;
             animationForward = true;
         }
     }
 
     _image->fill(Qt::black);
 
-    QPainter painter;
+    if(animationMode == FillWhite){
+        _image->fill(Qt::white);
+    }
+    else if(animationMode == Swirl){
 
-    painter.begin(_image);
+        QPainter painter;
 
-    QConicalGradient conicalGrad(1,1, animationStep*10);
-    conicalGrad.setColorAt(0, Qt::red);
-    conicalGrad.setColorAt(90.0/360.0, Qt::green);
-    conicalGrad.setColorAt(180.0/360.0, Qt::blue);
-    conicalGrad.setColorAt(270.0/360.0, Qt::magenta);
-    conicalGrad.setColorAt(360.0/360.0, Qt::yellow);
+        painter.begin(_image);
+
+        QConicalGradient conicalGrad(17,17, animationStep*10);
+        conicalGrad.setColorAt(0, Qt::red);
+        conicalGrad.setColorAt(90.0/360.0, Qt::green);
+        conicalGrad.setColorAt(180.0/360.0, Qt::blue);
+        conicalGrad.setColorAt(270.0/360.0, Qt::magenta);
+        conicalGrad.setColorAt(360.0/360.0, Qt::yellow);
 
 
-    //QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, _image->height()));
-    //linearGrad.setColorAt(0, Qt::white);
-    //linearGrad.setColorAt(0.3, Qt::darkGray);
-    /*linearGrad.setColorAt(0.2, Qt::red);
-    linearGrad.setColorAt(0.4, Qt::white);
-    linearGrad.setColorAt(0.8, Qt::blue);*/
-    //linearGrad.setColorAt(1, Qt::black);
+        //QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, _image->height()));
+        //linearGrad.setColorAt(0, Qt::white);
+        //linearGrad.setColorAt(0.3, Qt::darkGray);
+        /*linearGrad.setColorAt(0.2, Qt::red);
+        linearGrad.setColorAt(0.4, Qt::white);
+        linearGrad.setColorAt(0.8, Qt::blue);*/
+        //linearGrad.setColorAt(1, Qt::black);
 
-    QBrush fillBrush( conicalGrad );
-    QRect fillRect(0,0, 32, _image->height());
+        QBrush fillBrush( conicalGrad );
+        QRect fillRect(0,0, 34, _image->height());
 
-    //painter.setBrush(fillBrush);
-    painter.fillRect(fillRect, fillBrush);
+        //painter.setBrush(fillBrush);
+        painter.fillRect(fillRect, fillBrush);
 
-    painter.end();
+        painter.end();
+    }
 
+    //Update DMX values via OLA
     for(int i=0; i<columns.size(); i++){
         int col = columns[i];
         LedRun* run = _colToLedRun[col];
@@ -136,7 +146,6 @@ void PixelMapper::render(){
             }
         }
     }
-
 
     if(testRun != NULL){
         LedRun* run = testRun;
@@ -197,6 +206,61 @@ QJsonDocument PixelMapper::toJson(){
     jsonDoc.setArray(ledRunArray);
 
     return jsonDoc;
+}
+
+bool PixelMapper::fromJson(QJsonDocument &doc){
+    if(!doc.isArray()){
+        qWarning() << "PixelMapper::fromJson() - Document does not contain led run array";
+        //return false;
+    }
+
+    if(doc.isObject()){
+        qDebug() << "Doc is an object " << doc.object().keys();
+    }
+
+    QJsonArray ledRunArray = doc.array();
+
+
+    for(int i=0; i<ledRunArray.size(); i++){
+        QJsonValue itemValue = ledRunArray.at(i);
+
+        if(!itemValue.isObject()){
+            qCritical() << "PixelMapper::fromJson() - Item at index " << i << " is not an object!";
+            return false;
+        }
+
+        QJsonObject itemObj = itemValue.toObject();
+
+        QJsonValue colValue = itemObj.value("col");
+        QJsonValue runValue = itemObj.value("run");
+
+        if(colValue.isUndefined()){
+            qCritical() << "PixelMapper::fromJson() - Undefined column";
+            return false;
+        }
+
+        if(runValue.isUndefined()){
+            qCritical() << "PixelMapper::fromJson() - Undefined led run";
+            return false;
+        }
+
+        LedRun* ledRun = new LedRun();
+
+        QJsonObject runObj = runValue.toObject();
+
+        if( !ledRun->fromJson(runObj) ){
+            return false;
+        }
+
+        qDebug() << "Inserted col=" << colValue.toVariant().toInt();
+
+        _colToLedRun.insert(colValue.toVariant().toInt(), ledRun);
+    }
+
+    qDebug() << "PixelMapper::fromJson() - Loaded " << ledRunArray.size() << " items";
+    //
+
+    return true;
 }
 
 void PixelMapper::start(){

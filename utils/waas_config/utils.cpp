@@ -35,6 +35,21 @@ QJsonObject DmxAddress::toJson() const {
     return obj;
 }
 
+bool DmxAddress::fromJson(QJsonObject& obj) {
+    QJsonValue universeValue = obj.value("universe");
+    QJsonValue offsetValue = obj.value("offset");
+
+    if(universeValue.isUndefined() || offsetValue.isUndefined()){
+        qCritical() << "Missing universe or offset";
+        return false;
+    }
+
+    universe = universeValue.toVariant().toInt();
+    offset = offsetValue.toVariant().toInt();
+
+    return true;
+}
+
 bool DmxAddress::isBefore(DmxAddress& other){
     if(other.universe > universe){
         return true;

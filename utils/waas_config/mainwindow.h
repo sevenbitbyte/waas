@@ -41,6 +41,7 @@ class MainWindow : public QMainWindow
         void runEndSlot();
 
         void savePixelMap();
+        void loadPixelMap();
 
     private:
         Ui::MainWindow *ui;

@@ -19,6 +19,7 @@ struct DmxAddress {
 
     QString toString();
     QJsonObject toJson() const;
+    bool fromJson(QJsonObject& obj);
 
 };
 

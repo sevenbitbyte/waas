@@ -23,6 +23,7 @@ class PixelMapper : public QObject
         bool isRunning();
 
         QJsonDocument toJson();
+        bool fromJson(QJsonDocument& doc);
 
         LedRun* testRun;
         QLabel* _outputLabel;
@@ -49,6 +50,9 @@ class PixelMapper : public QObject
 
         OlaManager* _ola;
 
+        enum AnimationModes { FillWhite, Swirl=1, Space, FillBlack };
+
+        int animationMode;
         int animationStep;
         bool animationForward;
 };

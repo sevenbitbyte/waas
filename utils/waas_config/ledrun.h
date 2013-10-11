@@ -18,6 +18,7 @@ class LedRun
         DmxAddress dmxEnd;
 
         QJsonObject toJson() const;
+        bool fromJson(QJsonObject& obj);
 
         /*QPoint imgStart;
         QPoint imgEnd;*/

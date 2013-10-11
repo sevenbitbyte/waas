@@ -48,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(savePixelMap()));
+    connect(ui->actionLoad, SIGNAL(triggered()), this, SLOT(loadPixelMap()));
 
     _animateTimer->start();
     updateUi();
@@ -238,3 +239,27 @@ void MainWindow::savePixelMap(){
 
 }
 
+void MainWindow::loadPixelMap(){
+    QString fileName = QFileDialog::getOpenFileName(this, "Load pixel map", "~/", "*.json");
+
+    QFile pixelMapFile(fileName);
+
+    if(!pixelMapFile.open(QIODevice::ReadOnly)){
+        qCritical() << "Failed to open file: " << fileName;
+    }
+
+    QByteArray fileContent = pixelMapFile.readAll();
+
+    qDebug() << "Loaded " << fileContent.size() << " bytes from " << fileName;
+
+    QJsonDocument doc=QJsonDocument::fromJson(fileContent);
+
+    _pixelMap->fromJson(doc);
+
+    if(!_pixelMap->isRunning()){
+        qDebug() << "Starting pixel mapper";
+        _pixelMap->start();
+    }
+
+    pixelMapFile.close();
+}
