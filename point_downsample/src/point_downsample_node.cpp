@@ -41,8 +41,7 @@
 #include "point_downsample/SetPosition.h"
 #include "point_downsample/SetOrientation.h"
 
-#include <QtGui>
-#include "olamanager.h"
+//#include <QtGui>
 
 ros::NodeHandlePtr _nhPtr;
 
@@ -50,36 +49,52 @@ ros::Publisher _pointsPub;
 ros::Publisher _backgroundPub;
 ros::Publisher _foregroundPub;
 ros::Publisher _clustersPub;
-ros::Publisher _groundImuPub;
 ros::Publisher _visualizerPub;
 
-ros::Subscriber _kinectImuSub;
 ros::Subscriber _pointCloudSub;
 
 ros::ServiceServer _refreshParamServ;
-ros::ServiceServer _positionmServ;
-ros::ServiceServer _orientationServ;
 
 tf::TransformBroadcaster* _tfBroadcaster = NULL;
 tf::TransformListener* _tfListener = NULL;
 
-geometry_msgs::Point _kinectPosition;
-geometry_msgs::Quaternion _kinectOrientation;
+
+
+#define DEFAULT_downsample_leaf_size        (0.05f)
+#define DEFAULT_octree_voxel_size           (0.2f)
+#define DEFAULT_background_reset_threshold  (0.5f)
+#define DEFAULT_cluster_join_distance       (0.15f)
+#define DEFAULT_cluster_min_size            (200)
+#define DEFAULT_cluster_max_size            (3000)
+
+struct CloudProcessParams{
+    double downsample_leaf_size;
+    double octree_voxel_size;
+    double background_reset_threshold;
+    double cluster_join_distance;
+    double cluster_min_size;
+    double cluster_max_size;
+};
+
+tf::Vector3 _kinectPosition;
+tf::Quaternion _kinectOrientation;
+CloudProcessParams _cloudParams;
 
 using namespace point_downsample;
 
 /*Function Prototypes*/
+void publishTransform(const ros::TimerEvent& event);
+double loadRosParam(std::string param, double value=0.0f);
+void reloadParameters();
+
 //Subscriber callbacks
-void imuCallback(const sensor_msgs::Imu::ConstPtr& imuMsg);
 void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input);
 
 //Service callbackes
 bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response);
-bool setOrientation(SetOrientation::Request &request, SetOrientation::Response &response);
-bool setPosition(SetPosition::Request &request, SetPosition::Response &response);
 
 //Helper functions
-void updateTransform();
+//void updateTransform();
 
 visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxValue[3], float minValue[3], int id);
 
@@ -100,21 +115,6 @@ struct point3d {
     };
 };
 
-struct light_config{
-    float shift;
-    float spacing;
-    float radius;
-    int axis;
-    DmxAddress origin;
-    DmxAddress end;
-};
-
-OlaManager* _ola;
-light_config _lightConfig;
-
-float getValueByRange(float upper, float lower, float percent, bool reverse=false);
-float getDistance(light_config& config, DmxAddress& address, point3d& point);
-void updateLights(vector<point3d> centroids);
 
 
 int main(int argc, char** argv){
@@ -124,53 +124,39 @@ int main(int argc, char** argv){
     tf::TransformBroadcaster _broadcaster;
     _tfBroadcaster = &_broadcaster;
 
+    //Load parameters
+    reloadParameters();
 
-    _kinectImuSub = _nhPtr->subscribe("/imu", 10, imuCallback);
+    /*
+     *  TODO: Make topics relative rather than absolute
+     */
+
+    //Subscribers
     _pointCloudSub = _nhPtr->subscribe ("/camera/depth/points", 1, pointCloudCallback);
 
+    //Publishers
     _pointsPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/points", 1);
     _backgroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/background", 1);
     _clustersPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/clusters", 1);
     _foregroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/foreground", 1);
-    _groundImuPub = _nhPtr->advertise<sensor_msgs::Imu> ("/point_downsample/ground_imu", 1);
     _visualizerPub = _nhPtr->advertise<visualization_msgs::MarkerArray>( "/point_downsample/markers", 0 );
 
+    //Services
     _refreshParamServ = _nhPtr->advertiseService("refresh_params", refreshParams);
-    _orientationServ = _nhPtr->advertiseService("set_orientation", setOrientation);
-    _positionmServ = _nhPtr->advertiseService("set_position", setPosition);
 
 
-    //Load settings from parameters
-    _kinectPosition.z = 1.5;
+    ros::Timer timer = _nhPtr->createTimer(ros::Duration(0.1), publishTransform);
 
-    _lightConfig.origin.offset = 0;
-    _lightConfig.origin.universe = 1;
-    _lightConfig.end.offset = 3*32;
-    _lightConfig.end.universe = 1;
-
-    _lightConfig.radius = 0.6;
-    _lightConfig.spacing = 0.2286f; //9in in meters
-    _lightConfig.shift = 2.9f;      //2.5 meters
-    _lightConfig.axis = 2;
-
-    _ola = new OlaManager();
-
+    //Lift off
     ros::spin();
 }
 
-
-void imuCallback(const sensor_msgs::Imu::ConstPtr& imuMsg) {
-    /*tf::Quaternion orientation;
-    tf::quaternionMsgToTF(imuMsg->orientation, orientation);
-
-
+void publishTransform(const ros::TimerEvent& event){
     tf::Transform transform;
-    transform.setOrigin(tf::Vector3(_kinectPosition.x, _kinectPosition.y, _kinectPosition.z));
-    transform.setRotation(orientation);
 
-    _tfBroadcaster->sendTransform( tf::StampedTransform(transform, imuMsg->header.stamp, "base_link", "camera_link") );
-
-    */
+    transform.setOrigin( _kinectPosition );
+    transform.setRotation( _kinectOrientation );
+    _tfBroadcaster->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", "camera_link"));
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr backgroundCloud;
@@ -182,17 +168,13 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         return;
     }
 
-    if(_pointsPub.getNumSubscribers() < 1){
-        //Short circuit
-        //return;
-    }
 
-    //sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2);
+
     sensor_msgs::PointCloud2 downSampledInput;
 
 
     //Downsample input point cloud
-    float leafSize = 0.05f;
+    float leafSize = _cloudParams.downsample_leaf_size;
     pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
     downsample.setInputCloud(input);
     downsample.setLeafSize(leafSize, leafSize, leafSize);
@@ -206,17 +188,14 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         backgroundCloud = pclCloud;
         pcl::toROSMsg(*backgroundCloud, backgroundSensor);
 
-        _backgroundPub.publish(backgroundSensor);
-
-        //if(octree.getInputCloud()
-
-        //octree.deleteCurrentBuffer();
-
+        if(_backgroundPub.getNumSubscribers() > 0) {
+            _backgroundPub.publish(backgroundSensor);
+        }
 
         std::cout << "Octree ready" << std::endl;
     }
 
-    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree (0.2f);
+    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree ( _cloudParams.octree_voxel_size );
     octree.setInputCloud(backgroundCloud);
     octree.addPointsFromInputCloud();
 
@@ -225,7 +204,6 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
     octree.setInputCloud(pclCloud);
     octree.addPointsFromInputCloud();
 
-    //IndicesConstPtr octIndecess = octree.getIndices();
 
     std::vector<int> newPointIdxVector;
 
@@ -236,13 +214,11 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
     float foregroundPerecent = (float)foregroundCloud.points.size() / (float)backgroundCloud->points.size();
 
-    if(foregroundPerecent > 0.15){
+    if(foregroundPerecent > _cloudParams.background_reset_threshold){
         backgroundCloud.reset();
         std::cout << "Reseting foreground percent=" << foregroundPerecent << std::endl;
     }
 
-
-    //std::cout << "Filtering complete original=" << pclCloud->points.size() << " foreground=" << foregroundCloud.points.size() << std::endl;
 
     vector<point3d> centroids;
 
@@ -251,18 +227,15 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
         tree->setInputCloud ( foregroundCloud.makeShared() );
 
-        //std::cout << "Foreground KdTree ready" << std::endl;
 
         std::vector<pcl::PointIndices> cluster_indices;
         pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-        ec.setClusterTolerance (0.12f);
-        ec.setMinClusterSize (100);
-        ec.setMaxClusterSize (2000);
+        ec.setClusterTolerance ( _cloudParams.cluster_join_distance );
+        ec.setMinClusterSize ( _cloudParams.cluster_min_size );
+        ec.setMaxClusterSize ( _cloudParams.cluster_max_size );
         ec.setSearchMethod (tree);
         ec.setInputCloud ( foregroundCloud.makeShared() );
         ec.extract (cluster_indices);
-
-        //std::cout << cluster_indices.size() << " clusters" << std::endl;
 
         int index=0;
 
@@ -312,76 +285,60 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
         _clustersPub.publish(clusterSensor);
     }
 
-    updateLights(centroids);
-
-    /*TODO:
-     *  -Ground plane detection
-     *      -Conditionally transform orientation using Imu
-     *      -Compute position & orientation from ground plane
-     *      -Update /base_link transform using ground plane
-     *
-     */
-
-    //Transform into base_link
-    /*try{
-        pcl_ros::transformPointCloud(std::string("/base_link"), downSampledInput, *cloud, *_tfListener);
+    if(_foregroundPub.getNumSubscribers() > 0){
+        sensor_msgs::PointCloud2 foregroundSensor;
+        pcl::toROSMsg(foregroundCloud, foregroundSensor);
+        _foregroundPub.publish(foregroundSensor);
     }
-    catch(tf::TransformException ex){
-        ROS_ERROR("TFException %s",ex.what());
-        return;
-    }*/
 
-    //cloud->header.frame_id = "/base_link";
-    //_pointsPub.publish(cloud);
-
-    //cloud = downSampledInput;
-
-    sensor_msgs::PointCloud2 foregroundSensor;
-    pcl::toROSMsg(foregroundCloud, foregroundSensor);
-
-    _foregroundPub.publish(foregroundSensor);
-    _pointsPub.publish(downSampledInput);
+    if(_pointsPub.getNumSubscribers() > 0){
+        _pointsPub.publish(downSampledInput);
+    }
 }
 
+double loadRosParam(std::string param, double value){
+    if(_nhPtr->hasParam( param )){
+         _nhPtr->getParam( param, value );
+    }
+    else{
+        _nhPtr->setParam( param, value );
+    }
+
+    return value;
+}
 
 bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response){
-    //TODO
+    reloadParameters();
 
-    return false;
+    return true;
 }
 
+void reloadParameters(){
+    std::cout << "Reloading parameters ... ";
 
-bool setOrientation(SetOrientation::Request &request, SetOrientation::Response &response){
-    _kinectOrientation = request.orientation;
+    //Update position
+    _kinectPosition.setX( loadRosParam("/waas/position/x") );
+    _kinectPosition.setY( loadRosParam("/waas/position/y") );
+    _kinectPosition.setZ( loadRosParam("/waas/position/z") );
 
-    updateTransform();
+    double deg2radCoef = M_PI / 180.0f;
 
-    response.success = true;
-    return response.success;
-}
+    //Update orientation
+    _kinectOrientation.setRPY(
+                                deg2radCoef * loadRosParam("/waas/orientation/roll"),
+                                deg2radCoef * loadRosParam("/waas/orientation/pitch"),
+                                deg2radCoef * loadRosParam("/waas/orientation/yaw")
+                              );
 
+    //Update point cloud processing parameters
+    _cloudParams.downsample_leaf_size = loadRosParam("/waas/downsample_leaf_size", DEFAULT_downsample_leaf_size);
+    _cloudParams.octree_voxel_size = loadRosParam("/waas/octree_voxel_size", DEFAULT_octree_voxel_size);
+    _cloudParams.background_reset_threshold = loadRosParam("/waas/background_reset_threshold", DEFAULT_background_reset_threshold);
+    _cloudParams.cluster_join_distance = loadRosParam("/waas/cluster_join_distance", DEFAULT_cluster_join_distance);
+    _cloudParams.cluster_min_size = loadRosParam("/waas/cluster_min_size", DEFAULT_cluster_min_size);
+    _cloudParams.cluster_max_size = loadRosParam("/waas/cluster_max_size", DEFAULT_cluster_max_size);
 
-bool setPosition(SetPosition::Request &request, SetPosition::Response &response){
-    //TODO
-    _kinectPosition = request.position;
-
-    updateTransform();
-
-    response.success = true;
-    return response.success;
-}
-
-
-void updateTransform(){
-    /*
-     *  If imu_enabled
-     *      -set orientation using imu
-     *  Else if plane_finder_enabled
-     *      -detect largest plane in bottom half of cloud
-     *      -compute height above largest plane
-     *  Else
-     *      -only service calls change positon and orientation
-     */
+    std::cout << "done!" << std::endl;
 }
 
 
@@ -450,181 +407,6 @@ visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxV
     return markerArray;
 }
 
-
-float getDistance(light_config& config, DmxAddress& address, point3d& point){
-    int dmxDelta = (address.getGlobalOffset() - config.origin.getGlobalOffset()) / 3.0f;
-
-    float lightPos = (((float)dmxDelta) * config.spacing) + config.shift;
-
-    return point.data[ config.axis ] - lightPos;
-}
-
-
-enum EffectStates { IDLE, EXPANDING, FADING };
-int effectState = IDLE;
-double effectPos=0.0f;
-double effectRadius = 0.0f;
-double maxEffectRadius = 6.0f;
-double effectDurationMs = 1000.0f;
-double effectExpandCutoffPercent = 0.6f;
-double effectPercent = 0.0f;
-double effectStatePercent = 0.0f;   //! Percent complete of current effectState
-//double effectLowerBound;
-//double effectUpperBound;
-ros::Time effectStartTime;
-ros::Duration effectDeltaTime;
-
-void updateLights(vector<point3d> centroids){
-    //float radiusSq = _lightConfig.radius * _lightConfig.radius;
-    DmxAddress currentAddress = _lightConfig.origin;
-
-    _ola->blackout();
-    ros::Time now = ros::Time::now();
-
-    if(effectState != IDLE){
-        //Compute time delta, effect perect, and effect radius
-        effectDeltaTime = now - effectStartTime;
-        double deltaMs = ((double) effectDeltaTime.toNSec()) / 1000000.0f;
-
-        effectPercent = deltaMs / effectDurationMs;
-
-        if(effectPercent > 1.0f){
-            effectState = IDLE;
-            effectRadius = 0.0f;
-            effectPercent = 0.0f;
-            effectStatePercent = 0.0f;
-            std::cout << "Effect Idle at deltaMs=" << deltaMs << std::endl;
-        }
-        else{
-
-            if(effectPercent > effectExpandCutoffPercent){
-                //Fade out
-                effectState = FADING;
-                effectStatePercent = (effectPercent - effectExpandCutoffPercent) / (1.0f - effectExpandCutoffPercent);
-                effectRadius = maxEffectRadius;
-            }
-            else{
-                effectState = EXPANDING;
-                effectStatePercent = effectPercent / effectExpandCutoffPercent;
-                effectRadius = effectStatePercent * maxEffectRadius;
-            }
-
-            //effectLowerBound =  effectPos - effectRadius;
-            //effectUpperBound =  effectPos + effectRadius;
-        }
-    }
-
-    while(currentAddress.offset < _lightConfig.end.offset){ //For each light
-
-        int nearestBlobIdx = 0;
-        float nearestHeight = 0.0f;
-        float minDistance[3] = {-1.0f, -1.0f, -1.0f};
-
-        int nearestCentroidIdx = 0;
-
-        float mostNeg = 0.0f;
-        float mostPos = 0.0f;
-
-        for(int i=0; i<centroids.size(); i++){  //For each blob
-            float range = getDistance(_lightConfig, currentAddress, centroids[i]);
-
-            if(range < 0.0f && (range > mostNeg || mostNeg == 0.0f)){
-                mostNeg = range;
-            }
-            if(range > 0.0f && (range < mostPos || mostPos == 0.0f)){
-                mostPos = range;
-            }
-
-            range = fabs(range);
-
-            if(range < minDistance[_lightConfig.axis] || minDistance[_lightConfig.axis]==-1.0f) {
-                minDistance[_lightConfig.axis] = range;
-                nearestHeight = fabsf(centroids[i].data[1] + 0.8f);
-                nearestCentroidIdx = i;
-            }
-        }
-
-        if(minDistance[_lightConfig.axis] > -1.0f){
-            float radiusPercent = fmax(minDistance[_lightConfig.axis] / _lightConfig.radius, 0.01f);
-
-
-            float value = fmin(1.0f, (powf(5.0f, radiusPercent)-1.0f) / 4.0f);
-
-            float saturation = (nearestHeight / 1.3f);  //Scale saturation with height, shorting things have highest saturation
-            float hue = value;
-
-
-            if(nearestHeight < 0.3f && effectState == IDLE && centroids[nearestCentroidIdx].data[_lightConfig.axis] < 6.35f){
-                effectState = EXPANDING;
-                effectPercent = 0.0f;
-                effectPos = centroids[nearestCentroidIdx].data[_lightConfig.axis];
-                effectStartTime = now;
-
-                std::cout << "Effect triggered, height="<< nearestHeight << " at pos=" << effectPos << std::endl;
-            }
-
-            if(mostNeg != 0.0f && mostPos != 0.0f){
-                uint64_t ms = now.toNSec() / 1000000;
-                ms = ms % 3000;
-
-                float width = mostPos + fabs(mostNeg);
-                float position = (mostPos + mostNeg) / width;
-
-                if(width < (_lightConfig.radius/0.5f)) {
-                    hue = hue * 0.7f;
-                    hue += 0.3f * fabsf( sinf(  ((((float)ms) / 3000.0f) *2* M_PI) + position ) ) ;
-                    saturation = 1.0f;
-                }
-            }
-
-
-            if(effectState == EXPANDING){
-                //Snake out from pos
-                float zero[3] = {0.0f, 0.0f, 0.0f};
-                point3d pt(zero);
-                float lightPos = fabsf( getDistance(_lightConfig, currentAddress, pt) );
-
-                float lightPosEffectPosDelta = fabs(effectPos - lightPos);
-
-                if(lightPosEffectPosDelta < effectRadius){
-                    saturation = 0.0f;
-                    value = 0.0f;
-
-                    if(lightPosEffectPosDelta > (effectRadius - 0.8f)){
-                        //Draw head in random colors
-                        //hue = ((float)rand()/(float)RAND_MAX);
-
-                        hue = (lightPosEffectPosDelta / effectRadius) * 0.8f;
-                        saturation = 1.0f;
-                    }
-                }
-            }
-            else if(effectState == FADING){
-                float zero[3] = {0.0f, 0.0f, 0.0f};
-                point3d pt(zero);
-                float lightPos = fabsf( getDistance(_lightConfig, currentAddress, pt) );
-
-                float lightPosEffectPosDelta = fabs(effectPos - lightPos);
-
-                //Is this light in the effect radius?
-                if(lightPosEffectPosDelta < effectRadius){
-                    //Scale between 0.0f and saturatation
-                    saturation = getValueByRange(saturation, 0.0f, effectStatePercent);
-                    value = getValueByRange(value, 0.0f, effectStatePercent);
-                }
-            }
-
-            QColor color = QColor::fromHsvF(hue, saturation, 1.0f-value);
-
-            _ola->setPixel(currentAddress, color, 0.3f);
-        }
-
-
-        currentAddress.offset += 3;
-    }
-
-    _ola->sendBuffers();
-}
 
 float getValueByRange(float upper, float lower, float percent, bool reverse){
     float value = (upper - lower) * percent;
