@@ -99,19 +99,6 @@ int main(int argc, char** argv){
     tf::TransformBroadcaster _broadcaster;
     _tfBroadcaster = &_broadcaster;
 
-    _lightVizPub = _nhPtr->advertise<visualization_msgs::MarkerArray> ("/pixel_map_node/globes/markers", 1);
-    _framePub = _nhPtr->advertise<sensor_msgs::Image> ("/pixel_map_node/animation/image", 1);
-
-    _frameSub = _nhPtr->subscribe ("/pixel_map_node/animation/image", 1, frameCallback);
-    _blobSub = _nhPtr->subscribe("/point_downsample/markers", 1, blobCallback);
-
-    //Load parameters
-    reloadParameters();
-
-    //Services
-    _refreshParamServ = _nhPtr->advertiseService("/pixel_map_node/refresh_params", refreshParams);
-
-
 
     //Setup animation image
     _animationHostImage = new QImage(34, 34, QImage::Format_RGB32);
@@ -122,8 +109,26 @@ int main(int argc, char** argv){
     painter.fillRect(bounds, fillBrush);
     painter.end();
 
+    //Load parameters
+    reloadParameters();
+
     publishGlobeTransform(ros::TimerEvent());
+
+
+    _lightVizPub = _nhPtr->advertise<visualization_msgs::MarkerArray> ("/pixel_map_node/globes/markers", 1);
+    _framePub = _nhPtr->advertise<sensor_msgs::Image> ("/pixel_map_node/animation/image", 1);
+
+    _frameSub = _nhPtr->subscribe ("/pixel_map_node/animation/image", 1, frameCallback);
+    _blobSub = _nhPtr->subscribe("/point_downsample/markers", 1, blobCallback);
+
+
+
+    //Services
+    _refreshParamServ = _nhPtr->advertiseService("/pixel_map_node/refresh_params", refreshParams);
+
+
     publishGlobeMarkers();
+
 
     ros::Timer transformTimer = _nhPtr->createTimer(ros::Duration(0.2), publishGlobeTransform);
     ros::Timer renderTimer = _nhPtr->createTimer(ros::Duration(0.033), renderImage);    //30 FPS
@@ -196,35 +201,18 @@ void frameCallback(const sensor_msgs::ImagePtr& frame) {
     _pixelMapper->updateImage(frame);
 }
 
-/*
-double loadRosParam(std::string param, double value){
-    if(_nhPtr->hasParam( param )){
-         _nhPtr->getParam( param, value );
-    }
-    else{
-        _nhPtr->setParam( param, value );
-    }
 
-    return value;
-}
-
-bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response){
-    reloadParameters();
-
-    return true;
-}
-
-void reloadParameters(){
-    std::cout << "Reloading parameters ... ";
-
-    std::cout << "done!" << std::endl;
-}
-*/
 
 void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
 
-    if(!_tfListener->canTransform("base_link", "camera_link", ros::Time())){
-        std::cout<<"blobCallback() - Can't transform"<<std::endl;
+    try{
+        if(!_tfListener->canTransform("base_link", "globes_link", ros::Time())){
+            std::cout<<"blobCallback() - Can't transform"<<std::endl;
+            return;
+        }
+    }
+    catch(...){
+        std::cout<<"blobCallback() - Caught transform exception"<<std::endl;
         return;
     }
 
@@ -294,7 +282,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
     frame.step = _animationHostImage->width() * 3;
 
     for(int j=0; j<_animationHostImage->height(); j++){
-        for(int i=0; i<_animationHostImage->width(); i++){
+        for(int i=_animationHostImage->width()-1; i >= 0; i--){
 
             QRgb pixel = _animationHostImage->pixel(i, j);
 

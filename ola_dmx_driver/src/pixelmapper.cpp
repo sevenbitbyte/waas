@@ -43,11 +43,17 @@ void PixelMapper::updateImage(const sensor_msgs::ImagePtr& rosImage){
 
     for(int y=0; y < rosImage->height; y++){
         for(int x=0; x < rosImage->width; x++){
-            int idx = (y*step) + x;
+            int idx = (y*step) + (x*3);
 
             QColor c(   rosImage->data[idx],
                         rosImage->data[idx+1],
                         rosImage->data[idx+2]);
+
+            QRgb oldColor = _image->pixel(x,y);
+
+            c.setRed( (qRed(oldColor) + c.red()) / 2 );
+            c.setGreen( (qGreen(oldColor) + c.green()) / 2 );
+            c.setBlue( (qBlue(oldColor) + c.blue()) / 2 );
 
             _image->setPixel(x, y, c.rgb());
         }
@@ -138,6 +144,7 @@ void PixelMapper::render(){
         }
     }
 
+    _ola->sendBuffers();
     _imageLock.unlock();
 }
 
