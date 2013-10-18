@@ -142,10 +142,10 @@ int main(int argc, char** argv){
     _visualizerPub = _nhPtr->advertise<visualization_msgs::MarkerArray>( "/point_downsample/markers", 0 );
 
     //Services
-    _refreshParamServ = _nhPtr->advertiseService("refresh_params", refreshParams);
+    _refreshParamServ = _nhPtr->advertiseService("/point_downsample/refresh_params", refreshParams);
 
 
-    ros::Timer timer = _nhPtr->createTimer(ros::Duration(0.1), publishTransform);
+    ros::Timer timer = _nhPtr->createTimer(ros::Duration(0.2), publishTransform);
 
     //Lift off
     ros::spin();
@@ -317,17 +317,17 @@ void reloadParameters(){
     std::cout << "Reloading parameters ... ";
 
     //Update position
-    _kinectPosition.setX( loadRosParam("/waas/position/x") );
-    _kinectPosition.setY( loadRosParam("/waas/position/y") );
-    _kinectPosition.setZ( loadRosParam("/waas/position/z") );
+    _kinectPosition.setX( loadRosParam("/waas/cloud/position/x") );
+    _kinectPosition.setY( loadRosParam("/waas/cloud/position/y") );
+    _kinectPosition.setZ( loadRosParam("/waas/cloud/position/z") );
 
     double deg2radCoef = M_PI / 180.0f;
 
     //Update orientation
     _kinectOrientation.setRPY(
-                                deg2radCoef * loadRosParam("/waas/orientation/roll"),
-                                deg2radCoef * loadRosParam("/waas/orientation/pitch"),
-                                deg2radCoef * loadRosParam("/waas/orientation/yaw")
+                                deg2radCoef * loadRosParam("/waas/cloud/orientation/roll"),
+                                deg2radCoef * loadRosParam("/waas/cloud/orientation/pitch"),
+                                deg2radCoef * loadRosParam("/waas/cloud/orientation/yaw")
                               );
 
     //Update point cloud processing parameters

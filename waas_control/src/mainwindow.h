@@ -45,7 +45,21 @@ class MainWindow : public QMainWindow
         void yPosChangedSlot(double value);
         void zPosChangedSlot(double value);
 
+        void downsampleLeafSizeChangedSlot(double value);
+        void octreeVoxelSizeChangedSlot(double value);
+        void backgroundResetThresholdChangedSlot(double value);
+        void clusterJoinDistanceChangedSlot(double value);
+        void clusterMinSizeChangedSlot(double value);
+        void clusterMaxSizeChangedSlot(double value);
 
+        void globesScaleChangedSlot(double value);
+        void globesPositionXChangedSlot(double value);
+        void globesPositionYChangedSlot(double value);
+        void globesOrientationRollChangedSlot(double value);
+        void globesOrientationPitchChangedSlot(double value);
+        void globesOrientationYawChangedSlot(double value);
+        void globesSpacingXChangedSlot(double value);
+        void globesSpacingYChangedSlot(double value);
 
     signals:
         void triggerParamRefresh();

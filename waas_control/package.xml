@@ -47,6 +47,7 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>tf</build_depend>
+
   <run_depend>ola_dmx_driver</run_depend>
   <!-- <run_depend>blob_tracker</run_depend> -->
   <run_depend>point_downsample</run_depend>

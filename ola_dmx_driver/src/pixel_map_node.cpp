@@ -3,12 +3,15 @@
 
 #include <std_msgs/Int32.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/QuaternionStamped.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/InteractiveMarker.h>
 
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-
-#include <iniparser.h>
-#include <dictionary.h>
 
 #include <ola/DmxBuffer.h>
 #include <ola/OlaClient.h>
@@ -19,528 +22,333 @@
 #include <iostream>
 #include <sstream>
 
+#include <QtGui>
+#include <QtCore>
+
+//#include "point_downsample/RefreshParams.h"
+#include "utils.h"
+#include "olamanager.h"
+#include "pixelmapper.h"
+
+#include "ola_dmx_driver/RefreshParams.h"
+
+using namespace std;
+using namespace ola_dmx_driver;
+
+#define DEFAULT_GLOBE_HEIGHT (3.0f)
+
 ros::NodeHandlePtr _nhPtr;
 
-ros::Publisher _statusPub;
+
+//Animation_host Publishers
+ros::Publisher _framePub;
+
+
+//Animation host Subscribers
+ros::Subscriber _blobSub;
+
 ros::Subscriber _frameSub;
 
 ros::ServiceServer _refreshParamServ;
 
-using namespace std;
+ros::Publisher _lightVizPub;
+tf::TransformListener* _tfListener = NULL;
+tf::TransformBroadcaster* _tfBroadcaster = NULL;
 
-//Subscriber callbacks
-void imageCallback(const sensor_msgs::Image::ConstPtr& imageMsg);
+//Service callbackes
+bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response);
 
-//Helper functions
-bool parseConfig(std::string configPath);
+double loadRosParam(std::string param, double value=0.0f);
+void reloadParameters();
 
-#define BYTES_PER_PORT      (512/4)
-#define PIXELS_PER_PORT     (BYTES_PER_PORT/3)
+void renderImage(const ros::TimerEvent& event);
+void publishGlobeTransform(const ros::TimerEvent& event);
+void publishGlobeMarkers();
 
-
-struct point {
-    int x;
-    int y;
-
-    string toString(){
-        stringstream stream;
-
-        stream << "img(" << x << "," << y <<")";
-
-        return stream.str();
-    }
-};
+//Members
+OlaManager* _olaManager;
+PixelMapper* _pixelMapper;
 
 
-struct DmxAddress {
-    int universe;
-    int offset;
+geometry_msgs::Point _globesScale;
+tf::Vector3 _globesOrigin;
+tf::Quaternion _globesOrientation;
 
-    int distance(DmxAddress& other);
+geometry_msgs::Point _globeSpacing;
 
-    string toString(){
-        stringstream stream;
+QImage* _animationHostImage;
 
-        stream << "dmx(" << universe << "," << offset <<")";
-
-        return stream.str();
-    }
-};
-
-
-struct LedRun {
-    DmxAddress dmxStart;
-    DmxAddress dmxEnd;
-    point imageStart;
-    point imageEnd;
-
-    string toString(){
-
-        stringstream stream;
-
-        stream << dmxStart.toString() << " " << dmxEnd.toString() << " " << imageStart.toString() << " " << imageEnd.toString();
-
-        return stream.str();
-    }
-
-};
-
-
-struct LedStrand {
-    int subPortNumber;
-    vector<LedRun> runs;
-
-    bool reverse_zig_zag;
-
-    string toString(){
-        stringstream stream;
-
-        stream << "[strand-" << subPortNumber << "]" << endl
-               << "reverse=" << reverse_zig_zag << endl;
-
-        for(int i=0; i<runs.size(); i++){
-            stream << runs[i].toString() << endl;
-        }
-
-        return stream.str();
-    }
-};
-
-
-struct LedPort {
-    int portNumber;
-    int maxLength;
-    bool autoAllocDmx;
-    DmxAddress start;
-    DmxAddress end;
-    vector<LedStrand> strands;
-
-    string toString(){
-        stringstream stream;
-
-        stream << "[port-" << portNumber << "]" << endl
-               << "length=" << maxLength << endl
-               << "autoAlloc=" << autoAllocDmx << endl
-               << "start=" << start.toString() << endl
-               << "end=" << end.toString() << endl;
-
-        for(int i=0; i<strands.size(); i++){
-            stream << strands[i].toString() << endl;
-        }
-
-        return stream.str();
-    }
-};
-
-struct LedArray{
-    vector<int> run_lengths;
-    vector<LedPort*> ports;
-
-    string toString(){
-        stringstream stream;
-
-        stream << "[general]" << endl;
-
-        for(int i=0; i<ports.size(); i++){
-
-            stream << ports[i]->toString() << endl;
-
-        }
-    }
-};
-
-
-
-
-struct pixel_map_config{
-    uint16_t array_size[2];
-
-    struct dmx_map{
-        int dmxOffset;
-        int imageOffset;
-        int pixels;
-        int pixelStep;
-    };
-
-    map<int, vector<dmx_map> > universes;
-};
-
-//pixel_map_config _pixelMap;
-
-LedArray* ledArray = NULL;
-
-map<int, ola::DmxBuffer*> _dmxBuffers;
-ola::StreamingClient _olaCient(true);
+//Callbacks
+void frameCallback(const sensor_msgs::ImagePtr& frame);
+void blobCallback(const visualization_msgs::MarkerArrayPtr& markers);
 
 int main(int argc, char** argv){
-    //ros::init (argc, argv, "point_downsample");
-    //_nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
+    ros::init (argc, argv, "pixel_map_node");
+    _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
+    _tfListener = new tf::TransformListener();
+    tf::TransformBroadcaster _broadcaster;
+    _tfBroadcaster = &_broadcaster;
 
-    //_frameSub = _nhPtr->subscribe("/animation_host/frame", 1, imageCallback);
+    _lightVizPub = _nhPtr->advertise<visualization_msgs::MarkerArray> ("/pixel_map_node/globes/markers", 1);
+    _framePub = _nhPtr->advertise<sensor_msgs::Image> ("/pixel_map_node/animation/image", 1);
 
-    //Load settings from ini
-    if(!parseConfig("/home/sevenbit/.waas/pixel_map.ini")){
-        ROS_ERROR("Failed to parse pixel map configuration");
+    _frameSub = _nhPtr->subscribe ("/pixel_map_node/animation/image", 1, frameCallback);
+    _blobSub = _nhPtr->subscribe("/point_downsample/markers", 1, blobCallback);
+
+    //Load parameters
+    reloadParameters();
+
+    //Services
+    _refreshParamServ = _nhPtr->advertiseService("/pixel_map_node/refresh_params", refreshParams);
+
+    _olaManager = new OlaManager();
+    _olaManager->blackout();
+
+    _pixelMapper = new PixelMapper(_olaManager);
+
+    if(!_pixelMapper->fromFile()){
+        ROS_ERROR("Failed to load pixel map, exiting!");
         return -1;
     }
 
-    if(ledArray != NULL){
-         cout << "DEBUG" <<endl;
-         cout << ledArray->toString();
+
+    //Setup animation image
+    _animationHostImage = new QImage(34, 34, QImage::Format_RGB32);
+    QPainter painter;
+    QRect bounds(0,0, 34, 34);
+    QBrush fillBrush( QColor(0,0,0) );
+    painter.begin(_animationHostImage);
+    painter.fillRect(bounds, fillBrush);
+    painter.end();
+
+    publishGlobeTransform(ros::TimerEvent());
+    publishGlobeMarkers();
+
+    ros::Timer transformTimer = _nhPtr->createTimer(ros::Duration(0.2), publishGlobeTransform);
+    ros::Timer renderTimer = _nhPtr->createTimer(ros::Duration(0.033), renderImage);    //30 FPS
+
+    ros::spin();
+
+    delete _pixelMapper;
+    delete _olaManager;
+
+	return 0;
+}
+
+void renderImage(const ros::TimerEvent& event){
+    _pixelMapper->render();
+}
+
+void publishGlobeTransform(const ros::TimerEvent& event){
+    tf::Transform transform;
+
+    transform.setOrigin( _globesOrigin );
+    transform.setRotation( _globesOrientation );
+    _tfBroadcaster->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", "globes_link"));
+
+    if(_lightVizPub.getNumSubscribers() > 0){
+        publishGlobeMarkers();;
+    }
+}
+
+void publishGlobeMarkers(){
+    QMap<int, QPair<QPoint, QRgb> > pixelData = _pixelMapper->getGlobeData();
+
+    visualization_msgs::MarkerArrayPtr markerArray(new visualization_msgs::MarkerArray);
+
+    QMap<int, QPair<QPoint, QRgb> >::iterator pixelIter = pixelData.begin();
+
+    int id=0;
+    for(pixelIter; pixelIter != pixelData.end(); pixelIter++){
+        visualization_msgs::Marker globeMarker;
+        globeMarker.header.frame_id = "/globes_link";
+        globeMarker.ns = "pixel_map_node";
+        globeMarker.id = id;
+        globeMarker.type = visualization_msgs::Marker::CUBE;
+        globeMarker.action = visualization_msgs::Marker::ADD;
+        globeMarker.pose.position.x = pixelIter.value().first.x() * _globeSpacing.x;
+        globeMarker.pose.position.y = pixelIter.value().first.y() * _globeSpacing.y;
+        globeMarker.pose.position.z = 0;
+        globeMarker.pose.orientation.x = 0.0;
+        globeMarker.pose.orientation.y = 0.0;
+        globeMarker.pose.orientation.z = 0.0;
+        globeMarker.pose.orientation.w = 1.0;
+        globeMarker.scale.x = 0.05;
+        globeMarker.scale.y = 0.05;
+        globeMarker.scale.z = 0.05;
+        globeMarker.color.a = 1.0;
+        globeMarker.color.r = qRed(pixelIter.value().second);
+        globeMarker.color.g = qGreen(pixelIter.value().second);
+        globeMarker.color.b = qBlue(pixelIter.value().second);
+
+        markerArray->markers.push_back(globeMarker);
+
+        id++;
     }
 
-    //ros::spin();
+    _lightVizPub.publish(markerArray);
 }
 
 
-void imageCallback(const sensor_msgs::Image::ConstPtr& imageMsg){
-    /*map<int, ola::DmxBuffer*>::iterator bufferIter = _dmxBuffers.begin();
 
-    //Render into DmuxBuffers
-    for(; bufferIter != _dmxBuffers.end(); bufferIter++){
-        ola::DmxBuffer* buffer = bufferIter->second;
-        vector<pixel_map_config::dmx_map>::iterator univIter = _pixelMap.universes[ bufferIter->first ].begin();
+void frameCallback(const sensor_msgs::ImagePtr& frame) {
+    _pixelMapper->updateImage(frame);
+}
 
-        //Iterate over every dmx_map
-        for(; univIter != _pixelMap.universes[ bufferIter->first ].end(); univIter++){
-            if(univIter->pixelStep == 3){
-                buffer->SetRange(univIter->dmxOffset, &imageMsg->data[univIter->imageOffset], univIter->pixels * 3);
-            }
-            else{
-                for(int i=0; i < univIter->pixels; i++){
-                    int pixelIndex = i * univIter->pixelStep;
-                    buffer->SetRange(univIter->dmxOffset, &imageMsg->data[univIter->imageOffset + pixelIndex], 3);
-                }
-            }
+/*
+double loadRosParam(std::string param, double value){
+    if(_nhPtr->hasParam( param )){
+         _nhPtr->getParam( param, value );
+    }
+    else{
+        _nhPtr->setParam( param, value );
+    }
+
+    return value;
+}
+
+bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response){
+    reloadParameters();
+
+    return true;
+}
+
+void reloadParameters(){
+    std::cout << "Reloading parameters ... ";
+
+    std::cout << "done!" << std::endl;
+}
+*/
+
+void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
+
+    if(!_tfListener->canTransform("base_link", "camera_link", ros::Time())){
+        std::cout<<"blobCallback() - Can't transform"<<std::endl;
+        return;
+    }
+
+    QPainter painter;
+    painter.begin( _animationHostImage );
+
+    _animationHostImage->fill(QColor());
+
+    for(int i=0; i<markers->markers.size(); i++){
+        visualization_msgs::Marker& marker = markers->markers.at(i);
+
+        geometry_msgs::PoseStamped poseInput;
+        poseInput.header = marker.header;
+        poseInput.pose = marker.pose;
+
+        geometry_msgs::PoseStamped baseLinkPose;
+        _tfListener->transformPose("globes_link", poseInput, baseLinkPose);
+
+        if(marker.type == visualization_msgs::Marker::CUBE){
+
+            double widthPx = marker.scale.x * _globesScale.x;
+            double depthPx = marker.scale.y * _globesScale.y;
+
+            double centerXPx = (baseLinkPose.pose.position.x * _globesScale.x);
+            double centerYPx = (baseLinkPose.pose.position.y * _globesScale.y);
+
+            QRectF bounds(centerXPx - (widthPx/2.0f),
+                          centerYPx - (depthPx/2.0f),
+                          widthPx,
+                          depthPx);
+
+            cout << "(" << baseLinkPose.pose.position.x << "," << baseLinkPose.pose.position.y << ") -> (" <<centerXPx << "," << centerYPx << ")" <<endl;
+
+            QConicalGradient conicalGrad(centerXPx,centerYPx, 0);
+            conicalGrad.setColorAt(0, Qt::red);
+            conicalGrad.setColorAt(90.0/360.0, Qt::green);
+            conicalGrad.setColorAt(180.0/360.0, Qt::blue);
+            conicalGrad.setColorAt(270.0/360.0, Qt::magenta);
+            conicalGrad.setColorAt(360.0/360.0, Qt::yellow);
+
+            QBrush fillBrush( conicalGrad );
+            QPainterPath fillPath;
+
+            fillPath.addEllipse(bounds);
+
+            painter.fillPath(fillPath, fillBrush);
+            painter.save();
+
         }
     }
 
-    //Transmit buffers
-    for(bufferIter = _dmxBuffers.begin(); bufferIter != _dmxBuffers.end(); bufferIter++){
-        _olaCient.SendDmx(bufferIter->first, *bufferIter->second);
-    }*/
+    //painter.end();
+
+
+
+    sensor_msgs::Image frame;
+
+    frame.width = _animationHostImage->width();
+    frame.height = _animationHostImage->height();
+
+    frame.header.frame_id = "base_link";
+    frame.header.stamp = ros::Time();
+
+    frame.encoding = sensor_msgs::image_encodings::RGB8;
+
+    frame.data.clear();
+    frame.step = _animationHostImage->width() * 3;
+
+    for(int j=0; j<_animationHostImage->height(); j++){
+        for(int i=0; i<_animationHostImage->width(); i++){
+
+            QRgb pixel = _animationHostImage->pixel(i, j);
+
+            frame.data.push_back( qRed(pixel) );
+            frame.data.push_back( qGreen(pixel) );
+            frame.data.push_back( qBlue(pixel) );
+
+        }
+    }
+
+    _framePub.publish( frame );
 }
 
 
-vector<int> parseIntList(string str){
-    vector<int> intList;
-
-    int pos=0;
-
-    printf("Parsing [%s]\n", str.c_str());
-
-    while(pos < str.length()-1){
-        int commaIdx = str.find(',', pos);
-
-        if(commaIdx == string::npos){
-            string numberStr = str.substr(pos, str.length()-1);
-            pos = str.length();
-
-            int num = atoi(numberStr.c_str());
-            intList.push_back(num);
-            break;
-        }
-        else{
-            printf("pos=%i\n", pos);
-            string numberStr = str.substr(pos, commaIdx-pos);
-
-            printf("numberStr=%s\n", numberStr.c_str());
-
-            int count=1;
-            int openParen = str.find('(', pos);
-            int closeParen = str.find(')', pos);
-
-            if(openParen < commaIdx && closeParen < commaIdx && openParen > pos && closeParen > pos){
-                string countStr = str.substr(openParen, closeParen-openParen);
-
-                count = atoi(countStr.c_str());
-            }
-
-            pos = commaIdx+1;
-
-            int num = atoi(numberStr.c_str());
-
-            for(count; count > 0; count--){
-                intList.push_back(num);
-            }
-        }
-
+double loadRosParam(std::string param, double value){
+    if(_nhPtr->hasParam( param )){
+         _nhPtr->getParam( param, value );
+    }
+    else{
+        _nhPtr->setParam( param, value );
     }
 
-
-    return intList;
+    return value;
 }
 
-
-bool parseConfig(std::string configPath){
-    printf("Parsing pixel map[%s]\n", configPath.c_str());
-
-    dictionary* dict = iniparser_load(configPath.c_str());
-
-    if(dict != NULL){
-        int sections = iniparser_getnsec(dict);
-        printf("Pixel map has %i sections\n", sections);
-
-        for(int i=0; i<sections; i++){
-            string nodeName = iniparser_getsecname(dict, i);
-            printf("Section: %s\n", nodeName.c_str());
-
-            if(nodeName == "general"){
-                printf("Parsing general section\n");
-                if(ledArray != NULL){
-                    ROS_WARN("Duplicate general section!");
-                    perror("Duplicate general section!\n");
-                }
-                else{
-                    ledArray = new LedArray;
-                }
-
-                printf("Making keys\n");
-                string layoutKey = string(nodeName).append(":layout");
-
-                printf("Getting layout[%s]\n", layoutKey.c_str());
-                string layoutStr = iniparser_getstring(dict, layoutKey.c_str(), string(""));
-
-                if(layoutStr.size() < 1){
-                    printf("No layout defined for entry [%s] in file [%s]\n", nodeName.c_str(), configPath.c_str());
-                    return false;
-                }
-
-                printf("Layout [%s]\n", layoutStr.c_str());
-
-                ledArray->run_lengths = parseIntList(layoutStr);
-
-            }
-            else if(nodeName.find("port") == 0){
-                printf("Parsing port section\n");
-
-                string startUnivKey = string(nodeName).append(":startUniv");
-                string startAddrKey = string(nodeName).append(":startAddr");
-                string endUnivKey = string(nodeName).append(":endUniv");
-                string endAddrKey = string(nodeName).append(":endAddr");
-                string lengthKey = string(nodeName).append(":length");
-                string autoAllocKey = string(nodeName).append(":auto_alloc");   //Automatic strand allocation
-
-
-                int lengthExists = iniparser_find_entry(dict, (char*) lengthKey.c_str());
-                int autoAllocExists = iniparser_find_entry(dict, (char*) autoAllocKey.c_str());
-
-
-                if(lengthExists != 1){
-                    ROS_ERROR("No length defined for port entry [%s] in file [%s]", nodeName.c_str(), configPath.c_str());
-                    iniparser_freedict(dict);
-                    return false;
-                }
-
-
-                LedPort* port = new LedPort;
-
-                //Read maximum strand length
-                port->maxLength = iniparser_getint(dict, lengthKey.c_str(), -1);
-
-                //Read dmx auto allocate
-                string autoAlloc = iniparser_getstring(dict, autoAllocKey, string("true"));
-                if(autoAlloc == "true"){
-                    port->autoAllocDmx = true;
-                }
-                else{
-                    port->autoAllocDmx = false;
-                }
-
-                //Read start DMX address
-                port->start.universe = iniparser_getint(dict, startUnivKey.c_str(), -1);
-                port->start.offset= iniparser_getint(dict, startAddrKey.c_str(), -1);
-
-                //Read end DMX address
-                port->end.universe = iniparser_getint(dict, endUnivKey.c_str(), -1);
-                port->end.offset= iniparser_getint(dict, endAddrKey.c_str(), -1);
-
-                /*  NOTE
-                 *  CONVERT FROM ONE BASED TO ZERO BASED DMX ADDRESSES
-                 */
-
-                port->start.offset--;
-                port->end.offset--;
-
-                ledArray->ports.push_back(port);
-            }
-
-        }
-    }
-
-    iniparser_freedict(dict);
+bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response){
+    reloadParameters();
 
     return true;
 }
 
 
-/*
-bool parseConfig(std::string configPath){
-    ROS_DEBUG("Parsing pixel map[%s]", configPath.c_str());
+void reloadParameters(){
+    std::cout << "Reloading parameters ... ";
 
-    dictionary* dict = iniparser_load(configPath.c_str());
+    //Update position
+    _globesOrigin.setX( loadRosParam("/waas/globes/position/x", 0.0f) );
+    _globesOrigin.setY( loadRosParam("/waas/globes/position/y", 0.0f) );
+    _globesOrigin.setZ( loadRosParam("/waas/globes/position/z", DEFAULT_GLOBE_HEIGHT));
 
-    if(dict != NULL){
-        int sections = iniparser_getnsec(dict);
-        ROS_DEBUG("Pixel map has %i sections", sections);
+    double deg2radCoef = M_PI / 180.0f;
 
-        for(int i=0; i<sections; i++){
-            string nodeName = iniparser_getsecname(dict, i);
-            ROS_DEBUG("Section: %s", nodeName.c_str());
+    //Update orientation
+    _globesOrientation.setRPY(
+                                deg2radCoef * loadRosParam("/waas/globes/orientation/roll"),
+                                deg2radCoef * loadRosParam("/waas/globes/orientation/pitch"),
+                                deg2radCoef * loadRosParam("/waas/globes/orientation/yaw")
+                              );
 
-            if(nodeName == "encoding"){
-                //Create expected keys
-                string dmxEncodingKey = string(nodeName).append(":dmx_encoding");
-                string dmxChanDirKey = string(nodeName).append(":dmx_chan_dir");
-                string arrayShapeKey = string(nodeName).append(":array_shape");
-                string arraySizeKey = string(nodeName).append(":array_size");
-                string universesKey = string(nodeName).append(":universes");
+    _globesScale.x = loadRosParam("/waas/globes/scale", 1.0f/0.2032f);
+    _globesScale.y = _globesScale.x;
 
-                string dmxEncoding = iniparser_getstring(dict, dmxEncodingKey, "rgb");
-                string dmxChanDir = iniparser_getstring(dict, dmxChanDirKey, "col");
-                string arrayShape = iniparser_getstring(dict, arrayShapeKey, "square");
-                string arraySize = iniparser_getstring(dict, arraySizeKey, "");
-                string universeList = iniparser_getstring(dict, universesKey, "");
+    _globeSpacing.x = loadRosParam("/waas/globes/spacing/x", 0.2032);    //Default to 8in
+    _globeSpacing.y = loadRosParam("/waas/globes/spacing/y", 0.2032);    //Default to 8in
 
-                //Check for required definitions
-                if(arraySize.length() <= 0){
-                    ROS_ERROR("No array_size specified in pixel map[%s]!", configPath.c_str());
-                    iniparser_freedict(dict);
-                    return false;
-                }
-                if(universeList.length() <= 0){
-                    ROS_ERROR("No universes specified in pixel map[%s]!", configPath.c_str());
-                    iniparser_freedict(dict);
-                    return false;
-                }
-
-                //Check for unsupported/non-optimal configurations
-                if(arrayShape != "square"){
-                    ROS_WARN("Array shape[%s] not supported! Defaulting to square.", arrayShape.c_str());
-                }
-
-                if(dmxChanDir == "row" ){
-                    ROS_WARN("Setting dmx_chan_dir to value other than col is supported but may not be efficient");
-                }
-                else if(dmxChanDir != "col"){
-                    ROS_ERROR("Unsupported dmx_chan_dir[%s] in pixel map[%s]", dmxChanDir.c_str(), configPath.c_str());
-                    iniparser_freedict(dict);
-                    return false;
-                }
-
-                if(dmxEncoding != "rgb"){
-                    ROS_WARN("DMX encoding[%s] not supported! Defaulting to rgb.", arrayShape.c_str());
-                }
-
-                string::size_type index = arraySize.find(',');
-                if(index == string::npos){
-                    ROS_ERROR("Invalid array_size format in pixel map[%s], expected \"x,y\"", configPath.c_str());
-                    iniparser_freedict(dict);
-                    return false;
-                }
-
-                //Read led array dimensions
-                string x = arraySize.substr(0, index);
-                string y = arraySize.substr(index+1);
-
-                if(x.length() < 1 || y.length() < 1){
-                    ROS_ERROR("Invalid array_shape format in pixel map[%s], expected \"x,y\"", configPath.c_str());
-                    iniparser_freedict(dict);
-                    return false;
-                }
-
-                //Parse array dimensions
-                _pixelMap.array_size[0] = atoi(x.c_str());
-                _pixelMap.array_size[1] = atoi(y.c_str());
-
-                int mappedPorts=0;
-
-                //Read universe listing
-                do{
-                    index = universeList.find(',');
-
-                    string univIdStr = universeList.substr(0, index);
-
-                    if(univIdStr.length() < 1){
-                        ROS_ERROR("In pixel map config[%s], invalid universes format!", configPath.c_str());
-                        iniparser_freedict(dict);
-                        return false;
-                    }
-                    universeList.erase(0, index+1);
-
-                    int univId = atoi(univIdStr.c_str());
-
-                    vector<pixel_map_config::dmx_map> dmxMapVec;
-
-                    if(arrayShape == "square"){
-                        for(int i=0; i<4; i++){
-                            pixel_map_config::dmx_map dmxMap;
-
-                            if(dmxChanDir == "col"){
-                                dmxMap.pixels = _pixelMap.array_size[1];
-                                dmxMap.pixelStep = 3;
-                                dmxMap.dmxOffset = (BYTES_PER_PORT * i);
-                                dmxMap.imageOffset = (mappedPorts * _pixelMap.array_size[1]) * 3;
-                            }
-                            else if(dmxChanDir == "row"){
-                                dmxMap.pixels = _pixelMap.array_size[0];
-                                dmxMap.pixelStep = _pixelMap.array_size[0] * 3;
-                                dmxMap.dmxOffset = (BYTES_PER_PORT * i);
-                                dmxMap.imageOffset = (mappedPorts * _pixelMap.array_size[0]) * 3;
-                            }
-
-                            dmxMapVec.push_back(dmxMap);
-                            mappedPorts++;
-                        }
-                    }
-
-                    _pixelMap.universes.insert(make_pair( univId, dmxMapVec ));
-                    _dmxBuffers.insert(make_pair( univId, new ola::DmxBuffer() ));
-
-                } while(index != string::npos);
-            }
-            else{
-                //Parse override commands
-                ROS_WARN("DMX overrides not yet supported, ignoring section %s.", nodeName.c_str());
-            }
-        }
-
-        if(_pixelMap.array_size[0] > 0 &&
-           _pixelMap.array_size[1] > 0 &&
-           _pixelMap.universes.size() > 0){
-
-            //Validate mapping coverage
-            int imagePixels = _pixelMap.array_size[0] * _pixelMap.array_size[1];
-            int dmxPixels = 0;
-
-            map<int, vector<pixel_map_config::dmx_map> >::iterator univIter =  _pixelMap.universes.begin();
-            for(; univIter != _pixelMap.universes.end(); univIter++){
-                vector<pixel_map_config::dmx_map>::iterator dmxIter = univIter->second.begin();
-
-                for(; dmxIter != univIter->second.end(); dmxIter++){
-                    dmxPixels += dmxIter->pixels;
-                }
-            }
-
-            if(imagePixels < dmxPixels){
-                ROS_WARN("More DMX pixels[%i] mapped than exist in image[%i], this could be an error or simply an non-optimal mapping", dmxPixels, imagePixels);
-            }
-            else if(imagePixels > dmxPixels){
-                ROS_WARN("Not all image pixels[%i] mapped into DMX pixels[%i]", imagePixels, dmxPixels);
-            }
-
-            return true;
-        }
-        else{
-            ROS_WARN("No universes specified in pixel map! No output will be generated");
-            return true;
-        }
-    }
-    else{
-        ROS_ERROR("Failed to open pixel map[%s]", configPath.c_str());
-    }
-
-    iniparser_freedict(dict);
-    return false;
+    std::cout << "done!" << std::endl;
 }
-*/
+
