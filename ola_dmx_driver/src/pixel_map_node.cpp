@@ -83,6 +83,16 @@ void frameCallback(const sensor_msgs::ImagePtr& frame);
 void blobCallback(const visualization_msgs::MarkerArrayPtr& markers);
 
 int main(int argc, char** argv){
+    _olaManager = new OlaManager();
+    _olaManager->blackout();
+
+    _pixelMapper = new PixelMapper(_olaManager);
+
+    if(!_pixelMapper->fromFile()){
+        ROS_ERROR("Failed to load pixel map, exiting!");
+        return -1;
+    }
+
     ros::init (argc, argv, "pixel_map_node");
     _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
     _tfListener = new tf::TransformListener();
@@ -101,15 +111,6 @@ int main(int argc, char** argv){
     //Services
     _refreshParamServ = _nhPtr->advertiseService("/pixel_map_node/refresh_params", refreshParams);
 
-    _olaManager = new OlaManager();
-    _olaManager->blackout();
-
-    _pixelMapper = new PixelMapper(_olaManager);
-
-    if(!_pixelMapper->fromFile()){
-        ROS_ERROR("Failed to load pixel map, exiting!");
-        return -1;
-    }
 
 
     //Setup animation image
