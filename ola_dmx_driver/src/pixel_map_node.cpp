@@ -17,7 +17,6 @@
 #include <ola/OlaClient.h>
 #include <ola/StreamingClient.h>
 
-
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -31,6 +30,7 @@
 #include "pixelmapper.h"
 
 #include "ola_dmx_driver/RefreshParams.h"
+#include "starfield.h"
 
 using namespace std;
 using namespace ola_dmx_driver;
@@ -77,6 +77,14 @@ tf::Quaternion _globesOrientation;
 geometry_msgs::Point _globeSpacing;
 
 QImage* _animationHostImage;
+
+struct BlobInfo {
+    tf::Vector3 centroid;
+    tf::Vector3 bounds;
+    ros::Time timestamp;
+};
+
+QMap<int, BlobInfo> trackedBlobs;
 
 //Callbacks
 void frameCallback(const sensor_msgs::ImagePtr& frame);
@@ -228,32 +236,56 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
         poseInput.header = marker.header;
         poseInput.pose = marker.pose;
 
-        geometry_msgs::PoseStamped baseLinkPose;
-        _tfListener->transformPose("globes_link", poseInput, baseLinkPose);
+
 
         if(marker.type == visualization_msgs::Marker::CUBE){
 
-            double widthPx = marker.scale.x * _globesScale.x;
-            double depthPx = marker.scale.y * _globesScale.y;
+            geometry_msgs::PoseStamped baseLinkPose;
+            _tfListener->transformPose("globes_link", poseInput, baseLinkPose);
+
+            double widthPx = (marker.scale.x * _globesScale.x) / 1.75f;
+            double depthPx = (marker.scale.y * _globesScale.y) / 1.75f;
 
             double centerXPx = (baseLinkPose.pose.position.x * _globesScale.x);
             double centerYPx = (baseLinkPose.pose.position.y * _globesScale.y);
 
+            double radiusPx = qMax(widthPx, depthPx);
+
             QRectF bounds(centerXPx - (widthPx/2.0f),
                           centerYPx - (depthPx/2.0f),
-                          widthPx,
-                          depthPx);
+                          radiusPx,
+                          radiusPx);
+
+            /*BlobInfo blob;
+            blob.bounds.setX( widthPx );
+            blob.bounds.setY( depthPx );*/
 
             cout << "(" << baseLinkPose.pose.position.x << "," << baseLinkPose.pose.position.y << ") -> (" <<centerXPx << "," << centerYPx << ")" <<endl;
 
-            QConicalGradient conicalGrad(centerXPx,centerYPx, 0);
-            conicalGrad.setColorAt(0, Qt::red);
-            conicalGrad.setColorAt(90.0/360.0, Qt::green);
-            conicalGrad.setColorAt(180.0/360.0, Qt::blue);
-            conicalGrad.setColorAt(270.0/360.0, Qt::magenta);
-            conicalGrad.setColorAt(360.0/360.0, Qt::yellow);
+            QBrush fillBrush;
 
-            QBrush fillBrush( conicalGrad );
+
+            if(radiusPx > 5.5f){
+                QConicalGradient conicalGrad(centerXPx,centerYPx, 0);
+                conicalGrad.setColorAt(0, Qt::red);
+                conicalGrad.setColorAt(90.0/360.0, Qt::green);
+                conicalGrad.setColorAt(180.0/360.0, Qt::blue);
+                conicalGrad.setColorAt(270.0/360.0, Qt::magenta);
+                conicalGrad.setColorAt(360.0/360.0, Qt::yellow);
+
+                fillBrush = QBrush( conicalGrad );
+
+            }
+            else {
+                QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), radiusPx);
+                radialGrad.setColorAt(0, Qt::white);
+                radialGrad.setColorAt(1.0f, Qt::black);
+
+                fillBrush = QBrush( radialGrad );
+            }
+
+
+            //QBrush fillBrush( radialGrad );
             QPainterPath fillPath;
 
             fillPath.addEllipse(bounds);
