@@ -295,7 +295,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
             fillPath.addEllipse(bounds);
 
             painter.fillPath(fillPath, fillBrush);
-            painter.save();
+            //painter.save();
 
         }
     }
