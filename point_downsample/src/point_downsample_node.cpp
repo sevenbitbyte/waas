@@ -275,8 +275,10 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
             visualization_msgs::MarkerArrayPtr tempMarkers = generateMarkers(centroid, maxValues, minValues, index++);
 
+            markers->markers.push_back( tempMarkers->markers[0] );
+            markers->markers.push_back( tempMarkers->markers[1] );
 
-            markers->markers.insert(markers->markers.front(), tempMarkers->markers.begin(), tempMarkers->markers.end());
+            //markers->markers.insert(markers->markers.front(), tempMarkers->markers.begin(), tempMarkers->markers.end());
         }
 
         if(_visualizerPub.getNumSubscribers() > 0 && markers->markers.size() > 0){
