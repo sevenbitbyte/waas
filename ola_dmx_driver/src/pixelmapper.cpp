@@ -10,7 +10,7 @@ PixelMapper::PixelMapper(OlaManager* ola, QObject *parent) :
 
 void PixelMapper::clearImage(QColor color){
     QPainter painter;
-    QRect bounds(0, 0, _image->width(), _image->height());
+    QRect bounds(0, 0, _image->width()-1, _image->height()-1);
     QBrush fillBrush( color );
 
     painter.begin(_image);
