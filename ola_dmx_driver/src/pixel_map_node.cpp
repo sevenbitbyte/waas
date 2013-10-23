@@ -300,7 +300,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
         }
     }
 
-    //painter.end();
+    painter.end();
 
 
 
