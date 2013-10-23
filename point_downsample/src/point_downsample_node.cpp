@@ -239,7 +239,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         pcl::PointCloud<pcl::PointXYZ> clusterCloud;
 
-        visualization_msgs::MarkerArrayPtr markers;
+        visualization_msgs::MarkerArrayPtr markers( new visualization_msgs::MarkerArray );
 
         //Loop over ever cluster
         for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
@@ -275,10 +275,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
             visualization_msgs::MarkerArrayPtr tempMarkers = generateMarkers(centroid, maxValues, minValues, index++);
 
-            markers->markers.push_back( tempMarkers->markers[0] );
-            markers->markers.push_back( tempMarkers->markers[1] );
-
-            //markers->markers.insert(markers->markers.front(), tempMarkers->markers.begin(), tempMarkers->markers.end());
+            markers->markers.insert(markers->markers.begin(), tempMarkers->markers.begin(), tempMarkers->markers.end());
         }
 
         if(_visualizerPub.getNumSubscribers() > 0 && markers->markers.size() > 0){
