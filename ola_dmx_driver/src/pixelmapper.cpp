@@ -85,7 +85,7 @@ QMap<int, QPair<QPoint, QRgb> > PixelMapper::getGlobeData() const {
     return globeData;
 }
 
-void PixelMapper::setPixel(QPoint position, QColor color){
+/*void PixelMapper::setPixel(QPoint position, QColor color){
     QPainter painter;
 
     painter.begin(_image);
@@ -95,7 +95,7 @@ void PixelMapper::setPixel(QPoint position, QColor color){
     painter.drawPoint(position);
 
     painter.end();
-}
+}*/
 
 
 void PixelMapper::insertRun(int column, LedRun* run){

@@ -84,6 +84,12 @@ struct BlobInfo {
     ros::Time timestamp;
 };
 
+class AnimationHost {
+    private:
+        OlaManager* _olaManager;
+        PixelMapper* _pixelMapper;
+};
+
 QMap<int, BlobInfo> trackedBlobs;
 
 //Callbacks
@@ -109,7 +115,7 @@ int main(int argc, char** argv){
 
 
     //Setup animation image
-    _animationHostImage = new QImage(34, 34, QImage::Format_RGB32);
+    _animationHostImage = new QImage(_pixelMapper->width(), _pixelMapper->height(), QImage::Format_RGB32);
     QPainter painter;
     QRect bounds(0,0, 34, 34);
     QBrush fillBrush( QColor(0,0,0) );
@@ -236,18 +242,16 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
         poseInput.header = marker.header;
         poseInput.pose = marker.pose;
 
-
-
         if(marker.type == visualization_msgs::Marker::CUBE){
 
-            geometry_msgs::PoseStamped baseLinkPose;
-            _tfListener->transformPose("globes_link", poseInput, baseLinkPose);
+            geometry_msgs::PoseStamped globeLinkPose;
+            _tfListener->transformPose("globes_link", poseInput, globeLinkPose);
 
-            double widthPx = (marker.scale.x * _globesScale.x) / 1.75f;
+            double widthPx = (marker.scale.x * _globesScale.x) / 1.75f; //1.75 is aestecic not real conversion
             double depthPx = (marker.scale.y * _globesScale.y) / 1.75f;
 
-            double centerXPx = (baseLinkPose.pose.position.x * _globesScale.x);
-            double centerYPx = (baseLinkPose.pose.position.y * _globesScale.y);
+            double centerXPx = (globeLinkPose.pose.position.x * _globesScale.x);
+            double centerYPx = (globeLinkPose.pose.position.y * _globesScale.y);
 
             double radiusPx = qMax(widthPx, depthPx);
 
@@ -260,7 +264,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
             blob.bounds.setX( widthPx );
             blob.bounds.setY( depthPx );*/
 
-            cout << "(" << baseLinkPose.pose.position.x << "," << baseLinkPose.pose.position.y << ") -> (" <<centerXPx << "," << centerYPx << ")" <<endl;
+            cout << "(" << globeLinkPose.pose.position.x << "," << globeLinkPose.pose.position.y << ") -> (" <<centerXPx << "," << centerYPx << ")" <<endl;
 
             QBrush fillBrush;
 

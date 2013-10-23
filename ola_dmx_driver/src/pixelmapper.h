@@ -20,11 +20,11 @@ class PixelMapper : public QObject
     public:
         explicit PixelMapper(OlaManager* ola, QObject *parent = 0);
         
+        //void updateImage(const QImage& );
         void updateImage(const sensor_msgs::ImagePtr& rosImage);
         //QPicture* getPicture();
 
         void insertRun(int column, LedRun* run);
-        bool isRunning();
 
         QJsonDocument toJson();
         bool fromJson(QJsonDocument& doc);
@@ -53,7 +53,7 @@ class PixelMapper : public QObject
         
 
     public slots:
-        void setPixel(QPoint position, QColor);
+        //void setPixel(QPoint position, QColor);
         void render();
 
 
@@ -61,11 +61,8 @@ class PixelMapper : public QObject
         QMutex _imageLock;
         QImage* _image;
 
-
         QMap<int, LedRun*> _colToLedRun;   //Map image columns to LedRun
-
         OlaManager* _ola;
-
 };
 
 #endif // PIXELMAPPER_H
