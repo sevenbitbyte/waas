@@ -38,8 +38,6 @@
 #include <pcl-1.6/pcl/segmentation/extract_clusters.h>
 
 #include "point_downsample/RefreshParams.h"
-#include "point_downsample/SetPosition.h"
-#include "point_downsample/SetOrientation.h"
 
 //#include <QtGui>
 
@@ -118,7 +116,7 @@ struct point3d {
 
 
 int main(int argc, char** argv){
-    ros::init (argc, argv, "point_downsample");
+    ros::init (argc, argv, "point_downsample_node");
     _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
     _tfListener = new tf::TransformListener();
     tf::TransformBroadcaster _broadcaster;
@@ -241,6 +239,9 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         pcl::PointCloud<pcl::PointXYZ> clusterCloud;
 
+        visualization_msgs::MarkerArrayPtr markers;
+
+        //Loop over ever cluster
         for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
 
             float maxValues[3] = {-9000, -9000, -9000};
@@ -250,7 +251,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
             pcl::PointCloud<pcl::PointXYZ> localCluster(foregroundCloud, it->indices);
             clusterCloud += localCluster;
 
-
+            //Loop over every point
             for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++) {
 
                 for(int i=0; i<3; i++){
@@ -272,8 +273,12 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
             centroids.push_back( (point3d) centroid );
 
-            visualization_msgs::MarkerArrayPtr markers = generateMarkers(centroid, maxValues, minValues, index++);
+            visualization_msgs::MarkerArrayPtr tempMarkers = generateMarkers(centroid, maxValues, minValues, index++);
 
+            markers->markers.insert(tempMarkers->markers.begin(), tempMarkers->markers.end());
+        }
+
+        if(_visualizerPub.getNumSubscribers() > 0 && markers->markers.size() > 0){
             _visualizerPub.publish(markers);
         }
 
