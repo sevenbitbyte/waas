@@ -351,7 +351,7 @@ void reloadParameters(){
 visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxValue[3], float minValue[3], int id, ros::Time stamp){
     visualization_msgs::Marker centroidMarker;
     centroidMarker.header.frame_id = "/camera_depth_optical_frame";
-    centroidMarker.header.stamp = stamp;
+    //centroidMarker.header.stamp = ros::Time::now();;
     centroidMarker.ns = "point_downsample";
     centroidMarker.id = id;
     centroidMarker.type = visualization_msgs::Marker::SPHERE;
@@ -383,7 +383,7 @@ visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxV
 
     visualization_msgs::Marker boundsMarker;
     boundsMarker.header.frame_id = "/camera_depth_optical_frame";
-    boundsMarker.header.stamp = stamp;
+    //boundsMarker.header.stamp = ros::Time::now();;
     boundsMarker.ns = "point_downsample";
     boundsMarker.id = id+100;
     boundsMarker.type = visualization_msgs::Marker::CUBE;

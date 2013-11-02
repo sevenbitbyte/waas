@@ -308,13 +308,13 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
 
             geometry_msgs::PoseStamped globeLinkPose;
 
-            try {
+            //try {
                 _tfListener->transformPose("globes_link", poseInput, globeLinkPose);
-            }
+            /*}
             catch(...){
                 std::cout << "TF Error" << std::endl;
                 continue;
-            }
+            }*/
 
             double deltaXPx = (marker.scale.x * _globesScale.x) / 1.75f; //1.75 is aestecic not real conversion
             double deltaYPx = (marker.scale.y * _globesScale.y) / 1.75f;
