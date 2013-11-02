@@ -22,7 +22,7 @@ struct RenderData {
 
 class Animation {
     public:
-        virtual void renderFrame(QImage& image, const RenderData& data) = 0;
+        virtual void renderFrame(QImage* image, const RenderData& data) = 0;
 };
 
 class BlobTracker {

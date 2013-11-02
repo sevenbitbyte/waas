@@ -28,6 +28,7 @@
 
 //#include "point_downsample/RefreshParams.h"
 #include "animationhost.h"
+#include "animations.h"
 
 #include "ola_dmx_driver/RefreshParams.h"
 #include "starfield.h"
@@ -92,11 +93,15 @@ int main(int argc, char** argv){
     _blobTracker = new BlobTracker(_dataPtr);
     _animationHost = new AnimationHost("", _dataPtr);
 
+    Animation* fill = new FillFade();
+    _animationHost->insertLayer(0, fill);
+
+    Animation* starPath = new StarPath();
+    _animationHost->insertLayer(1, starPath);
 
     _tfListener = new tf::TransformListener();
     tf::TransformBroadcaster _broadcaster;
     _tfBroadcaster = &_broadcaster;
-
 
 
     //Load parameters
@@ -183,13 +188,17 @@ void updateIdleAnimation(){
 
 
 void renderImage(const ros::TimerEvent& event){
-
+    std::cout << "renderImage()" << std::endl;
     _dataPtr->timestamp = ros::Time::now();
 
     _blobTracker->updateBlobs( _pendingBlobs );
     _pendingBlobs.clear();
 
     QImage* image = _animationHost->renderAll();
+
+    if(image == NULL) {
+        return;
+    }
 
     sensor_msgs::Image frame;
 
@@ -285,6 +294,8 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
         return;
     }
 
+    std::cout << "blobCallback()" << std::endl;
+
 
     for(int i=0; i<markers->markers.size(); i++){
         visualization_msgs::Marker& marker = markers->markers.at(i);
@@ -296,7 +307,13 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
         if(marker.type == visualization_msgs::Marker::CUBE){
 
             geometry_msgs::PoseStamped globeLinkPose;
-            _tfListener->transformPose("globes_link", poseInput, globeLinkPose);
+
+            try {
+                _tfListener->transformPose("globes_link", poseInput, globeLinkPose);
+            }
+            catch(...){
+                continue;
+            }
 
             double deltaXPx = (marker.scale.x * _globesScale.x) / 1.75f; //1.75 is aestecic not real conversion
             double deltaYPx = (marker.scale.y * _globesScale.y) / 1.75f;

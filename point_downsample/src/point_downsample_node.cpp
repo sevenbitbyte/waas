@@ -94,7 +94,7 @@ bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &res
 //Helper functions
 //void updateTransform();
 
-visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxValue[3], float minValue[3], int id);
+visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxValue[3], float minValue[3], int id, ros::Time stamp);
 
 struct point3d {
     point3d(float values[3]){
@@ -273,7 +273,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
             centroids.push_back( (point3d) centroid );
 
-            visualization_msgs::MarkerArrayPtr tempMarkers = generateMarkers(centroid, maxValues, minValues, index++);
+            visualization_msgs::MarkerArrayPtr tempMarkers = generateMarkers(centroid, maxValues, minValues, index++, input->header.stamp);
 
             markers->markers.insert(markers->markers.begin(), tempMarkers->markers.begin(), tempMarkers->markers.end());
         }
@@ -347,10 +347,10 @@ void reloadParameters(){
 }
 
 
-visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxValue[3], float minValue[3], int id){
+visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxValue[3], float minValue[3], int id, ros::Time stamp){
     visualization_msgs::Marker centroidMarker;
     centroidMarker.header.frame_id = "/camera_depth_optical_frame";
-    centroidMarker.header.stamp = ros::Time();
+    centroidMarker.header.stamp = stamp;
     centroidMarker.ns = "point_downsample";
     centroidMarker.id = id;
     centroidMarker.type = visualization_msgs::Marker::SPHERE;
@@ -382,7 +382,7 @@ visualization_msgs::MarkerArrayPtr generateMarkers(float centroid[3], float maxV
 
     visualization_msgs::Marker boundsMarker;
     boundsMarker.header.frame_id = "/camera_depth_optical_frame";
-    boundsMarker.header.stamp = ros::Time();
+    boundsMarker.header.stamp = stamp;
     boundsMarker.ns = "point_downsample";
     boundsMarker.id = id+100;
     boundsMarker.type = visualization_msgs::Marker::CUBE;

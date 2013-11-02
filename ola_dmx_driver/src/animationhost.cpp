@@ -3,6 +3,7 @@
 
 BlobTracker::BlobTracker(QSharedPointer<RenderData> data) {
     _dataPtr = data;
+    _maxAgeMs = 5000;
     _maxJoinRadius = 0.8;
 }
 
@@ -48,12 +49,21 @@ void BlobTracker::insertBlob(BlobInfo* b){
 }
 
 void BlobTracker::updateBlobs(QList<BlobInfo*> blobs) {
+    std::cout << "Updating " << _dataPtr->blobs.count() << " blobs in "
+              << _dataPtr->blobs.keys().count() << " clusters" <<  std::endl;
+
     QMultiMap<int,BlobInfo*>::iterator currentIter = _dataPtr->blobs.begin();
-    for(; currentIter != _dataPtr->blobs.end(); currentIter++){
+    while(currentIter != _dataPtr->blobs.end()){
         ros::Duration age = _dataPtr->timestamp - currentIter.value()->timestamp;
         if( (age.toSec() * 1000) > _maxAgeMs ) {
+
+            std::cout << "Deleting blob, too old age=" << age.toSec() << " sec" << std::endl;
+
+            delete currentIter.value();
             currentIter = _dataPtr->blobs.erase(currentIter);
-            currentIter--;
+        }
+        else{
+            currentIter++;
         }
     }
 
@@ -136,7 +146,7 @@ QImage* AnimationHost::renderLayer(int minLayer, int maxLayer) {
         int layer = layerIter.key();
         if(layer < minLayer || layer > maxLayer) { continue; }
 
-        layerIter.value()->renderFrame(*frame, *data);
+        layerIter.value()->renderFrame(frame, *data);
     }
 
     return frame;
