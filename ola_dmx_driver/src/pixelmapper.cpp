@@ -175,6 +175,13 @@ void PixelMapper::setBackgroundColor(QColor c) {
     _imageLock.unlock();
 }
 
+void PixelMapper::fillBackground() {
+    _imageLock.lock();
+    _image->fill(_backgroundColor);
+    _imageDirty = true;
+    _imageLock.unlock();
+}
+
 QJsonDocument PixelMapper::toJson(){
     QJsonDocument jsonDoc;
 

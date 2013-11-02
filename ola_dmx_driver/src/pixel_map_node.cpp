@@ -230,8 +230,9 @@ void renderImage(const ros::TimerEvent& event){
 
     _pixelMapper->setBackgroundColor(background);
 
-    if(idleDuration.toSec() > 30){
+    if(idleDuration.toSec() > 0){
         //Update idle animation
+        _pixelMapper->fillBackground();
     }
 
 

@@ -62,6 +62,7 @@ class PixelMapper : public QObject
         //void setPixel(QPoint position, QColor);
         void render();
         void setBackgroundColor(QColor c);
+        void fillBackground();
 
 
     private:
