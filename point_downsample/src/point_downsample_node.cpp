@@ -143,7 +143,7 @@ int main(int argc, char** argv){
     _refreshParamServ = _nhPtr->advertiseService("/point_downsample/refresh_params", refreshParams);
 
 
-    ros::Timer timer = _nhPtr->createTimer(ros::Duration(0.2), publishTransform);
+    ros::Timer timer = _nhPtr->createTimer(ros::Duration(0.05), publishTransform);
 
     //Lift off
     ros::spin();

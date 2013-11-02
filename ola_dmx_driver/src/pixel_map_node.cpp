@@ -122,7 +122,7 @@ int main(int argc, char** argv){
     publishGlobeMarkers();
 
 
-    ros::Timer transformTimer = _nhPtr->createTimer(ros::Duration(0.2), publishGlobeTransform);
+    ros::Timer transformTimer = _nhPtr->createTimer(ros::Duration(0.05), publishGlobeTransform);
     ros::Timer renderTimer = _nhPtr->createTimer(ros::Duration(0.033), renderImage);    //30 FPS
 
     ros::spin();
