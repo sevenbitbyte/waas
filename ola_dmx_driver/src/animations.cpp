@@ -86,9 +86,6 @@ void StarSim::renderFrame(QImage *image, const RenderData &data) {
     ros::Time now;
     vector<StarInfo>::iterator siitr;
 
-    QPainter painter;
-    painter.begin(image);
-
     siitr = objects.begin();
 
     while(siitr != objects.end()) {
@@ -137,6 +134,9 @@ void StarSim::renderFrame(QImage *image, const RenderData &data) {
     sf.wells = wells;
 
     sf.update();
+
+    QPainter painter;
+    painter.begin(image);
 
     // TODO: Add the painting logic
 
