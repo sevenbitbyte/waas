@@ -64,10 +64,13 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
         else {
             QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), radiusPx);
             QColor white(Qt::white);
-            white.setHsvF(0, 0, position);
+            white.setHsvF(0, 0, 1.0-position);
+
+            QColor black(0, 0, 0);
+            black.setAlphaF(position);
 
             radialGrad.setColorAt(0, white);
-            radialGrad.setColorAt(1.0f, Qt::black);
+            radialGrad.setColorAt(1.0f, black);
 
             fillBrush = QBrush( radialGrad );
         }
@@ -143,6 +146,8 @@ void StarSim::renderFrame(QImage *image, const RenderData &data) {
     painter.begin(image);
 
     // TODO: Add the painting logic
+
+
 
     painter.end();
 }

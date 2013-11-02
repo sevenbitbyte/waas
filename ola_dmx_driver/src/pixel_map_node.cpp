@@ -31,7 +31,7 @@
 #include "animations.h"
 
 #include "ola_dmx_driver/RefreshParams.h"
-#include "starfield.h"
+//#include "starfield.h"
 
 using namespace std;
 using namespace ola_dmx_driver;
@@ -39,7 +39,6 @@ using namespace ola_dmx_driver;
 #define DEFAULT_GLOBE_HEIGHT (3.0f)
 
 ros::NodeHandlePtr _nhPtr;
-
 
 //Animation_host Publishers
 ros::Publisher _framePub;
