@@ -49,8 +49,14 @@ void BlobTracker::insertBlob(BlobInfo* b){
 }
 
 void BlobTracker::updateBlobs(QList<BlobInfo*> blobs) {
-    std::cout << "Updating " << _dataPtr->blobs.count() << " blobs in "
-              << _dataPtr->blobs.keys().count() << " clusters" <<  std::endl;
+    if(_dataPtr->blobs.count() > 1){
+        std::cout << "Updating " << _dataPtr->blobs.count() << " blobs in "
+                  << _dataPtr->blobs.keys().count() << " clusters" <<  std::endl;
+    }
+
+    if(blobs.size() > 0){
+        std::cout << "Got " << blobs.size() << " new blobs" << std::endl;
+    }
 
     QMultiMap<int,BlobInfo*>::iterator currentIter = _dataPtr->blobs.begin();
     while(currentIter != _dataPtr->blobs.end()){

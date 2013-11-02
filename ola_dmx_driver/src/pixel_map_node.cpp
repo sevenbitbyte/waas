@@ -188,7 +188,7 @@ void updateIdleAnimation(){
 
 
 void renderImage(const ros::TimerEvent& event){
-    std::cout << "renderImage()" << std::endl;
+    //std::cout << "renderImage()" << std::endl;
     _dataPtr->timestamp = ros::Time::now();
 
     _blobTracker->updateBlobs( _pendingBlobs );
@@ -294,7 +294,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
         return;
     }
 
-    std::cout << "blobCallback()" << std::endl;
+    std::cout << "blobCallback() with " << markers->markers.size() << std::endl;
 
 
     for(int i=0; i<markers->markers.size(); i++){
@@ -312,6 +312,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
                 _tfListener->transformPose("globes_link", poseInput, globeLinkPose);
             }
             catch(...){
+                std::cout << "TF Error" << std::endl;
                 continue;
             }
 

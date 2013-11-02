@@ -237,6 +237,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
         int index=0;
 
+        ros::Time stamp = ros::Time::now();
         pcl::PointCloud<pcl::PointXYZ> clusterCloud;
 
         visualization_msgs::MarkerArrayPtr markers( new visualization_msgs::MarkerArray );
@@ -273,7 +274,7 @@ void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
 
             centroids.push_back( (point3d) centroid );
 
-            visualization_msgs::MarkerArrayPtr tempMarkers = generateMarkers(centroid, maxValues, minValues, index++, input->header.stamp);
+            visualization_msgs::MarkerArrayPtr tempMarkers = generateMarkers(centroid, maxValues, minValues, index++, stamp);
 
             markers->markers.insert(markers->markers.begin(), tempMarkers->markers.begin(), tempMarkers->markers.end());
         }
