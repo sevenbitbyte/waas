@@ -18,7 +18,7 @@ void FillFade::renderFrame(QImage* image, const RenderData& data) {
 
 
 StarPath::StarPath() {
-    duration = ros::Duration(3);
+    duration = ros::Duration(1.5);
 }
 
 void StarPath::renderFrame(QImage* image, const RenderData& data) {
@@ -32,6 +32,9 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
         double durationDelta = (double) (delta.toNSec() % duration.toNSec());
         double position = durationDelta / (double) duration.toNSec();
 
+        if(delta > duration){
+            continue;
+        }
 
         double widthPx = blob->bounds.x();
         double depthPx = blob->bounds.y();
@@ -45,9 +48,7 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
                       centerYPx - (depthPx/2.0f),
                       radiusPx,
                       radiusPx);
-
         QBrush fillBrush;
-
 
         if(radiusPx > 5.5f){
             QConicalGradient conicalGrad(centerXPx,centerYPx, 0);
@@ -62,7 +63,10 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
         }
         else {
             QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), radiusPx);
-            radialGrad.setColorAt(0, Qt::white);
+            QColor white(Qt::white);
+            white.setHsvF(0, 0, position);
+
+            radialGrad.setColorAt(0, white);
             radialGrad.setColorAt(1.0f, Qt::black);
 
             fillBrush = QBrush( radialGrad );
