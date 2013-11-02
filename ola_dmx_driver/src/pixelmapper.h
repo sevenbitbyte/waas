@@ -22,7 +22,7 @@ class PixelMapper : public QObject
         
         void updateImage(const QImage& image);
         void updateImage(const sensor_msgs::ImagePtr& rosImage);
-        //QPicture* getPicture();
+        QImage* getImage();
 
         void insertRun(int column, LedRun* run);
 

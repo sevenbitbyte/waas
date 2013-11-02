@@ -81,6 +81,12 @@ void PixelMapper::updateImage(const sensor_msgs::ImagePtr& rosImage){
     _imageLock.unlock();
 }
 
+QImage* PixelMapper::getImage() {
+    //NOTE, TODO: Not thread safe at all!
+
+    return _image;
+}
+
 QMap<int, QPair<QPoint, QRgb> > PixelMapper::getGlobeData() const {
     QMap<int, QPair<QPoint, QRgb> > globeData;
 

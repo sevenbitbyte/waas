@@ -41,6 +41,7 @@ ros::NodeHandlePtr _nhPtr;
 
 
 //Animation_host Publishers
+ros::Publisher _blobImagePub;
 ros::Publisher _framePub;
 
 
@@ -140,9 +141,10 @@ int main(int argc, char** argv){
 
 
     _lightVizPub = _nhPtr->advertise<visualization_msgs::MarkerArray> ("/pixel_map_node/globes/markers", 1);
+    _blobImagePub = _nhPtr->advertise<sensor_msgs::Image> ("/pixel_map_node/animation/blob_image", 1);
     _framePub = _nhPtr->advertise<sensor_msgs::Image> ("/pixel_map_node/animation/image", 1);
 
-    _frameSub = _nhPtr->subscribe ("/pixel_map_node/animation/image", 1, frameCallback);
+    _frameSub = _nhPtr->subscribe ("/pixel_map_node/animation/blob_image", 1, frameCallback);
     _blobSub = _nhPtr->subscribe("/point_downsample/markers", 1, blobCallback);
 
 
@@ -237,6 +239,36 @@ void renderImage(const ros::TimerEvent& event){
 
         _pixelMapper->render();
     }
+
+
+    QImage* img = _pixelMapper->getImage();
+
+    sensor_msgs::Image frame;
+
+    frame.width = img->width();
+    frame.height = img->height();
+
+    frame.header.frame_id = "base_link";
+    frame.header.stamp = ros::Time();
+
+    frame.encoding = sensor_msgs::image_encodings::RGB8;
+
+    frame.data.clear();
+    frame.step = img->width() * 3;
+
+    for(int j=0; j<img->height(); j++){
+        for(int i=img->width()-1; i >= 0; i--){
+
+            QRgb pixel = img->pixel(i, j);
+
+            frame.data.push_back( qRed(pixel) );
+            frame.data.push_back( qGreen(pixel) );
+            frame.data.push_back( qBlue(pixel) );
+
+        }
+    }
+
+    _framePub.publish( frame );
 
     frameCount++;
 }
@@ -413,7 +445,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
         }
     }
 
-    _framePub.publish( frame );
+    _blobImagePub.publish( frame );
 }
 
 
