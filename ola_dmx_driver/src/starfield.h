@@ -15,10 +15,8 @@ struct StarfieldState {
 
         tf::Vector3 position;
         tf::Vector3 velocity;
-        tf::Vector3 accel;
-        //tf::Vector3 momentum;
         tf::Vector3 force;
-        //tfScalar mass;
+        tf::tfScalar mass;
         ros::Time created;
         tfScalar maxDuration;
     };
@@ -26,9 +24,9 @@ struct StarfieldState {
     vector<StarInfo> wells;     //Non moving gravity wells
     vector<StarInfo> objects;   //Moving objects
 
+    static const tfScalar G = -9.81;
+
     StarfieldState();
-
-
 
     /**
      * @brief update

@@ -82,3 +82,67 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
     }
     painter.end();
 }
+
+StarSim::StarSim() { }
+
+void StarSim::renderFrame(QImage *image, const RenderData &data) {
+
+    ros::Time now;
+    vector<StarInfo>::iterator siitr;
+
+    QPainter painter;
+    painter.begin(image);
+
+    siitr = objects.begin();
+
+    while(siitr != objects.end()) {
+        StarInfo si = *siitr;
+
+        if (si.position[0] < 0 || si.position[0] > 30 ||
+            si.position[1] < 0 || si.position[1] > 30 ||
+            now > (st.created + si.maxDuration)) {
+            objects.erase(siitr++);
+        }
+
+        siitr++;
+    }
+
+    wells = vector<StarInfo>();
+
+    foreach(BlobInfo* blob, data.blobs) {
+        StarInfo well;
+        well.position.setValues(blob->centroid.x(), blob->centroid.y(), 0);
+        wells.push_back(well);
+
+        double widthPx = blob->bounds.x();
+        double depthPx = blob->bounds.y();
+
+        double radiusPx = qMax(widthPx, depthPx);
+
+        if (radiusPx > 5.5) {
+            if (sf.objects.size() < maxObj) {
+                // Create a new star with random values
+                StarInfo star;
+
+                star.position[0] = blob->centroid.x() + 1 - (rand()%2);
+                star.position[1] = blob->centroid.y() + 1 - (rand()%2);
+
+                double mag = rand() % 5.0f;
+                double dir = (rand() % 1) * (2 * 3.1415 / 180);
+
+                star.velocity[0] = cos(dir) * mag;
+                star.velocity[1] = sin(dir) * mag;
+
+                sf.objects.push_back(star);
+            }
+        }
+    }
+
+    sf.wells = wells;
+
+    sf.update();
+
+    // TODO: Add the painting logic
+
+    painter.end();
+}
