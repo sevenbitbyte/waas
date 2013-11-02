@@ -78,6 +78,9 @@ geometry_msgs::Point _globeSpacing;
 
 QImage* _animationHostImage;
 
+QColor background;
+qint64 frameCount;
+
 struct BlobInfo {
     tf::Vector3 centroid;
     tf::Vector3 bounds;
@@ -90,6 +93,7 @@ class AnimationHost {
         PixelMapper* _pixelMapper;
 };
 
+ros::Time lastInteractiveFrame;
 QMap<int, BlobInfo> trackedBlobs;
 
 //Callbacks
@@ -101,11 +105,15 @@ int main(int argc, char** argv){
     _olaManager->blackout();
 
     _pixelMapper = new PixelMapper(_olaManager);
+    lastInteractiveFrame = ros::Time::now();
 
     if(!_pixelMapper->fromFile()){
         ROS_ERROR("Failed to load pixel map, exiting!");
         return -1;
     }
+
+    background.setHsvF(0.0f, 0.9, 0.5);
+    frameCount = 0;
 
     ros::init (argc, argv, "pixel_map_node");
     _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
@@ -155,8 +163,80 @@ int main(int argc, char** argv){
 	return 0;
 }
 
+struct Blip {
+    QPointF position;
+    QDateTime startTime;
+    QDateTime endTime;
+    QColor startColor;
+    QColor endColor;
+};
+
+QVector<Blip> idleBlips;
+
+void updateIdleAnimation(){
+    QDateTime now = QDateTime::currentDateTimeUtc();
+
+    /*
+
+    if(idleBlips.count() < 5){
+        int newBlips = qrand() % 50;
+
+        int width = _pixelMapper->width();
+        int height = _pixelMapper->height();
+
+        for(int i=0; i<newBlips; i++){
+            int delayMs = qrand() % 25000;
+            int durationMs = qrand() % 15000;
+
+            Blip b;
+
+            b.position.setX( qrand() % width );
+            b.position.setY( qrand() % height );
+            b.startTime = now.addMSecs(delayMs);
+            b.endTime = b.startTime.addMSecs(delayMs);
+
+            b.startColor = QColor(Qt::black);
+            b.endColor = QColor(Qt::white);
+
+            idleBlips.push_back(b);
+        }
+    }
+
+    for(int i=0; i<idleBlips.size(); i++){
+        Blip b = idleBlips[i];
+        
+        if(b.endTime < now){
+            
+        }
+        
+        qreal progress = 
+    }
+
+    */
+}
+
+
+
 void renderImage(const ros::TimerEvent& event){
-    _pixelMapper->render();
+    ros::Duration idleDuration = ros::Time::now() - lastInteractiveFrame;
+
+    qreal hue = (1.0f / 300.0f) * (qreal)(frameCount % 300);
+
+    background.setHsvF( hue, background.saturationF(), background.valueF() );
+
+    _pixelMapper->setBackgroundColor(background);
+
+    if(idleDuration.toSec() > 30){
+        //Update idle animation
+    }
+
+
+    if(_pixelMapper->isDirty()) {
+
+        _pixelMapper->render();
+    }
+
+    frameCount++;
 }
 
 void publishGlobeTransform(const ros::TimerEvent& event){
@@ -212,9 +292,9 @@ void publishGlobeMarkers(){
 
 
 void frameCallback(const sensor_msgs::ImagePtr& frame) {
+    lastInteractiveFrame = frame->header.stamp;
     _pixelMapper->updateImage(frame);
 }
-
 
 
 void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
@@ -247,16 +327,18 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
             geometry_msgs::PoseStamped globeLinkPose;
             _tfListener->transformPose("globes_link", poseInput, globeLinkPose);
 
-            double widthPx = (marker.scale.x * _globesScale.x) / 1.75f; //1.75 is aestecic not real conversion
-            double depthPx = (marker.scale.y * _globesScale.y) / 1.75f;
+            double deltaXPx = (marker.scale.x * _globesScale.x) / 1.75f; //1.75 is aestecic not real conversion
+            double deltaYPx = (marker.scale.y * _globesScale.y) / 1.75f;
+            double deltaZPx = (marker.scale.z * _globesScale.z) / 1.75f;
+
 
             double centerXPx = (globeLinkPose.pose.position.x * _globesScale.x);
             double centerYPx = (globeLinkPose.pose.position.y * _globesScale.y);
 
-            double radiusPx = qMax(widthPx, depthPx);
+            double radiusPx = qMax(deltaXPx, deltaYPx);
 
-            QRectF bounds(centerXPx - (widthPx/2.0f),
-                          centerYPx - (depthPx/2.0f),
+            QRectF bounds(centerXPx - (deltaXPx/2.0f),
+                          centerYPx - (deltaYPx/2.0f),
                           radiusPx,
                           radiusPx);
 
@@ -264,7 +346,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
             blob.bounds.setX( widthPx );
             blob.bounds.setY( depthPx );*/
 
-            cout << "(" << globeLinkPose.pose.position.x << "," << globeLinkPose.pose.position.y << ") -> (" <<centerXPx << "," << centerYPx << ")" <<endl;
+            //cout << "(" << globeLinkPose.pose.position.x << "," << globeLinkPose.pose.position.y << ") -> (" <<centerXPx << "," << centerYPx << ")" <<endl;
 
             QBrush fillBrush;
 

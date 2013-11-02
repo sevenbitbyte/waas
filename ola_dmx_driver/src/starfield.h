@@ -1,4 +1,4 @@
-/*#ifndef STARFIELD_H
+#ifndef STARFIELD_H
 #define STARFIELD_H
 
 #include "ros/ros.h"
@@ -15,9 +15,10 @@ struct StarfieldState {
 
         tf::Vector3 position;
         tf::Vector3 velocity;
-        tf::Vector3 momentum;
+        tf::Vector3 accel;
+        //tf::Vector3 momentum;
         tf::Vector3 force;
-        tfScalar mass;
+        //tfScalar mass;
         ros::Time created;
         tfScalar maxDuration;
     };
@@ -27,7 +28,7 @@ struct StarfieldState {
 
     StarfieldState();
 
-*/
+
 
     /**
      * @brief update
@@ -36,12 +37,11 @@ struct StarfieldState {
      *          -Update object physics {position, velocity, momentum}
      *
      */
-    /*
     void update();
 
-    tf::Vector3 computeGravitationalForce(tf::Vector3 position);
+    //tf::Vector3 computeGravitationalForce(tf::Vector3 position);
 
 };
 
 #endif  //STARFIELD_H
-*/
+

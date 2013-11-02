@@ -16,6 +16,7 @@ void PixelMapper::clearImage(QColor color){
     painter.begin(_image);
     painter.fillRect(bounds, fillBrush);
     painter.end();
+    _imageDirty = true;
 }
 
 
@@ -28,12 +29,29 @@ void PixelMapper::setSize(int width, int height){
     clearImage();
 }
 
+bool PixelMapper::isDirty() const {
+    return _imageDirty;
+}
+
 int PixelMapper::width() const {
     return _image->width();
 }
 
 int PixelMapper::height() const {
     return _image->height();
+}
+
+void PixelMapper::updateImage(const QImage &image){
+    _imageLock.lock();
+
+    if(_image != NULL){
+        delete _image;
+    }
+
+    _image = new QImage(image);
+
+    _imageDirty = true;
+    _imageLock.unlock();
 }
 
 void PixelMapper::updateImage(const sensor_msgs::ImagePtr& rosImage){
@@ -59,6 +77,7 @@ void PixelMapper::updateImage(const sensor_msgs::ImagePtr& rosImage){
         }
     }
 
+    _imageDirty = true;
     _imageLock.unlock();
 }
 
@@ -85,17 +104,6 @@ QMap<int, QPair<QPoint, QRgb> > PixelMapper::getGlobeData() const {
     return globeData;
 }
 
-/*void PixelMapper::setPixel(QPoint position, QColor color){
-    QPainter painter;
-
-    painter.begin(_image);
-
-    painter.setPen(color);
-
-    painter.drawPoint(position);
-
-    painter.end();
-}*/
 
 
 void PixelMapper::insertRun(int column, LedRun* run){
@@ -145,10 +153,17 @@ void PixelMapper::render(){
     }
 
     _ola->sendBuffers();
+    _imageDirty = false;
     _imageLock.unlock();
 }
 
 
+void PixelMapper::setBackgroundColor(QColor c) {
+    _imageLock.lock();
+    _image->fill(c);
+    _imageDirty = true;
+    _imageLock.unlock();
+}
 
 QJsonDocument PixelMapper::toJson(){
     QJsonDocument jsonDoc;

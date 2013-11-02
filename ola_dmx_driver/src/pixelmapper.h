@@ -20,7 +20,7 @@ class PixelMapper : public QObject
     public:
         explicit PixelMapper(OlaManager* ola, QObject *parent = 0);
         
-        //void updateImage(const QImage& );
+        void updateImage(const QImage& image);
         void updateImage(const sensor_msgs::ImagePtr& rosImage);
         //QPicture* getPicture();
 
@@ -40,6 +40,12 @@ class PixelMapper : public QObject
         void clearImage(QColor color=QColor());
         void setSize(int width, int height);
 
+        /**
+         * @brief   Returns true if the image has been modified since the last time it was rendered
+         * @return
+         */
+        bool isDirty() const;
+
         int width() const;
         int height() const;
 
@@ -55,11 +61,13 @@ class PixelMapper : public QObject
     public slots:
         //void setPixel(QPoint position, QColor);
         void render();
+        void setBackgroundColor(QColor c);
 
 
     private:
         QMutex _imageLock;
         QImage* _image;
+        bool _imageDirty;
 
         QMap<int, LedRun*> _colToLedRun;   //Map image columns to LedRun
         OlaManager* _ola;
