@@ -69,6 +69,8 @@ class PixelMapper : public QObject
         QImage* _image;
         bool _imageDirty;
 
+        QColor _backgroundColor;
+
         QMap<int, LedRun*> _colToLedRun;   //Map image columns to LedRun
         OlaManager* _ola;
 };
