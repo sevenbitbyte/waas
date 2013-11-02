@@ -104,6 +104,9 @@ int main(int argc, char** argv){
     _olaManager = new OlaManager();
     _olaManager->blackout();
 
+    ros::init (argc, argv, "pixel_map_node");
+    _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
+
     _pixelMapper = new PixelMapper(_olaManager);
     lastInteractiveFrame = ros::Time::now();
 
@@ -115,8 +118,7 @@ int main(int argc, char** argv){
     background.setHsvF(0.0f, 0.9, 0.5);
     frameCount = 0;
 
-    ros::init (argc, argv, "pixel_map_node");
-    _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
+
     _tfListener = new tf::TransformListener();
     tf::TransformBroadcaster _broadcaster;
     _tfBroadcaster = &_broadcaster;
