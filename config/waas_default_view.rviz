@@ -139,8 +139,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 0.682645
-        Min Value: -0.121362
+        Max Value: 2.09157
+        Min Value: -0.246074
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -195,17 +195,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 14.9794
+      Distance: 11.3769
       Focal Point:
-        X: 5.74153
-        Y: 0.133333
-        Z: 0.427484
+        X: 0.9976
+        Y: -0.00324852
+        Z: 0.422741
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.294797
+      Pitch: 0.449797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.04556
+      Yaw: 3.18374
     Saved: ~
 Window Geometry:
   Displays:

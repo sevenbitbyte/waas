@@ -1,6 +1,9 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+
 #include <std_msgs/Int32.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
@@ -10,8 +13,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/InteractiveMarker.h>
 
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
+
 
 #include <ola/DmxBuffer.h>
 #include <ola/OlaClient.h>
@@ -25,9 +27,7 @@
 #include <QtCore>
 
 //#include "point_downsample/RefreshParams.h"
-#include "utils.h"
-#include "olamanager.h"
-#include "pixelmapper.h"
+#include "animationhost.h"
 
 #include "ola_dmx_driver/RefreshParams.h"
 #include "starfield.h"
@@ -41,14 +41,12 @@ ros::NodeHandlePtr _nhPtr;
 
 
 //Animation_host Publishers
-ros::Publisher _blobImagePub;
 ros::Publisher _framePub;
 
 
 //Animation host Subscribers
 ros::Subscriber _blobSub;
 
-ros::Subscriber _frameSub;
 
 ros::ServiceServer _refreshParamServ;
 
@@ -67,8 +65,10 @@ void publishGlobeTransform(const ros::TimerEvent& event);
 void publishGlobeMarkers();
 
 //Members
-OlaManager* _olaManager;
-PixelMapper* _pixelMapper;
+QList<BlobInfo*> _pendingBlobs;
+QSharedPointer<RenderData> _dataPtr;
+BlobTracker* _blobTracker;
+AnimationHost* _animationHost;
 
 
 geometry_msgs::Point _globesScale;
@@ -77,47 +77,20 @@ tf::Quaternion _globesOrientation;
 
 geometry_msgs::Point _globeSpacing;
 
-QImage* _animationHostImage;
 
-QColor background;
-qint64 frameCount;
-
-struct BlobInfo {
-    tf::Vector3 centroid;
-    tf::Vector3 bounds;
-    ros::Time timestamp;
-};
-
-class AnimationHost {
-    private:
-        OlaManager* _olaManager;
-        PixelMapper* _pixelMapper;
-};
-
-ros::Time lastInteractiveFrame;
-QMap<int, BlobInfo> trackedBlobs;
 
 //Callbacks
-void frameCallback(const sensor_msgs::ImagePtr& frame);
 void blobCallback(const visualization_msgs::MarkerArrayPtr& markers);
 
 int main(int argc, char** argv){
-    _olaManager = new OlaManager();
-    _olaManager->blackout();
 
     ros::init (argc, argv, "pixel_map_node");
     _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
 
-    _pixelMapper = new PixelMapper(_olaManager);
-    lastInteractiveFrame = ros::Time::now();
-
-    if(!_pixelMapper->fromFile()){
-        ROS_ERROR("Failed to load pixel map, exiting!");
-        return -1;
-    }
-
-    background.setHsvF(0.0f, 0.9, 0.5);
-    frameCount = 0;
+    _dataPtr = QSharedPointer<RenderData>( new RenderData );
+    _dataPtr->timestamp = ros::Time::now();
+    _blobTracker = new BlobTracker(_dataPtr);
+    _animationHost = new AnimationHost("", _dataPtr);
 
 
     _tfListener = new tf::TransformListener();
@@ -125,14 +98,6 @@ int main(int argc, char** argv){
     _tfBroadcaster = &_broadcaster;
 
 
-    //Setup animation image
-    _animationHostImage = new QImage(_pixelMapper->width(), _pixelMapper->height(), QImage::Format_RGB32);
-    QPainter painter;
-    QRect bounds(0,0, 34, 34);
-    QBrush fillBrush( QColor(0,0,0) );
-    painter.begin(_animationHostImage);
-    painter.fillRect(bounds, fillBrush);
-    painter.end();
 
     //Load parameters
     reloadParameters();
@@ -141,13 +106,9 @@ int main(int argc, char** argv){
 
 
     _lightVizPub = _nhPtr->advertise<visualization_msgs::MarkerArray> ("/pixel_map_node/globes/markers", 1);
-    _blobImagePub = _nhPtr->advertise<sensor_msgs::Image> ("/pixel_map_node/animation/blob_image", 1);
     _framePub = _nhPtr->advertise<sensor_msgs::Image> ("/pixel_map_node/animation/image", 1);
 
-    _frameSub = _nhPtr->subscribe ("/pixel_map_node/animation/blob_image", 1, frameCallback);
     _blobSub = _nhPtr->subscribe("/point_downsample/markers", 1, blobCallback);
-
-
 
     //Services
     _refreshParamServ = _nhPtr->advertiseService("/pixel_map_node/refresh_params", refreshParams);
@@ -161,8 +122,8 @@ int main(int argc, char** argv){
 
     ros::spin();
 
-    delete _pixelMapper;
-    delete _olaManager;
+    delete _animationHost;
+    delete _blobTracker;
 
 	return 0;
 }
@@ -222,55 +183,40 @@ void updateIdleAnimation(){
 
 
 void renderImage(const ros::TimerEvent& event){
-    ros::Duration idleDuration = ros::Time::now() - lastInteractiveFrame;
 
-    qreal hue = (1.0f / 300.0f) * (qreal)(frameCount % 300);
+    _dataPtr->timestamp = ros::Time::now();
 
-    background.setHsvF( hue, background.saturationF(), background.valueF() );
+    _blobTracker->updateBlobs( _pendingBlobs );
+    _pendingBlobs.clear();
 
-    _pixelMapper->setBackgroundColor(background);
+    QImage* image = _animationHost->renderAll();
 
-    if(idleDuration.toSec() > 5){
-        //Update idle animation
-        _pixelMapper->fillBackground();
-    }
+    sensor_msgs::Image frame;
 
+    frame.width = image->width();
+    frame.height = image->height();
 
-    if(_pixelMapper->isDirty()) {
+    frame.header.frame_id = "base_link";
+    frame.header.stamp = ros::Time();
 
-        _pixelMapper->render();
+    frame.encoding = sensor_msgs::image_encodings::RGB8;
 
-        QImage* img = _pixelMapper->getImage();
+    frame.data.clear();
+    frame.step = image->width() * 3;
 
-        sensor_msgs::Image frame;
+    for(int j=0; j<image->height(); j++){
+        for(int i=image->width()-1; i >= 0; i--){
 
-        frame.width = img->width();
-        frame.height = img->height();
+            QRgb pixel = image->pixel(i, j);
 
-        frame.header.frame_id = "base_link";
-        frame.header.stamp = ros::Time();
+            frame.data.push_back( qRed(pixel) );
+            frame.data.push_back( qGreen(pixel) );
+            frame.data.push_back( qBlue(pixel) );
 
-        frame.encoding = sensor_msgs::image_encodings::RGB8;
-
-        frame.data.clear();
-        frame.step = img->width() * 3;
-
-        for(int j=0; j<img->height(); j++){
-            for(int i=img->width()-1; i >= 0; i--){
-
-                QRgb pixel = img->pixel(i, j);
-
-                frame.data.push_back( qRed(pixel) );
-                frame.data.push_back( qGreen(pixel) );
-                frame.data.push_back( qBlue(pixel) );
-
-            }
         }
-
-        _framePub.publish( frame );
     }
 
-    frameCount++;
+    _framePub.publish( frame );
 }
 
 void publishGlobeTransform(const ros::TimerEvent& event){
@@ -286,7 +232,7 @@ void publishGlobeTransform(const ros::TimerEvent& event){
 }
 
 void publishGlobeMarkers(){
-    QMap<int, QPair<QPoint, QRgb> > pixelData = _pixelMapper->getGlobeData();
+    QMap<int, QPair<QPoint, QRgb> > pixelData = _animationHost->getPixelMapper()->getGlobeData();
 
     visualization_msgs::MarkerArrayPtr markerArray(new visualization_msgs::MarkerArray);
 
@@ -325,11 +271,6 @@ void publishGlobeMarkers(){
 
 
 
-void frameCallback(const sensor_msgs::ImagePtr& frame) {
-    lastInteractiveFrame = frame->header.stamp;
-    _pixelMapper->updateImage(frame);
-}
-
 
 void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
 
@@ -344,10 +285,6 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
         return;
     }
 
-    QPainter painter;
-    painter.begin( _animationHostImage );
-
-    _animationHostImage->fill(QColor());
 
     for(int i=0; i<markers->markers.size(); i++){
         visualization_msgs::Marker& marker = markers->markers.at(i);
@@ -369,83 +306,15 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
             double centerXPx = (globeLinkPose.pose.position.x * _globesScale.x);
             double centerYPx = (globeLinkPose.pose.position.y * _globesScale.y);
 
-            double radiusPx = qMax(deltaXPx, deltaYPx);
+            BlobInfo* blob = new BlobInfo;
 
-            QRectF bounds(centerXPx - (deltaXPx/2.0f),
-                          centerYPx - (deltaYPx/2.0f),
-                          radiusPx,
-                          radiusPx);
+            blob->bounds.setValue( deltaXPx, deltaYPx, deltaZPx );
+            blob->centroid.setValue( centerXPx, centerYPx, 0 );
+            blob->timestamp = marker.header.stamp;
 
-            /*BlobInfo blob;
-            blob.bounds.setX( widthPx );
-            blob.bounds.setY( depthPx );*/
-
-            //cout << "(" << globeLinkPose.pose.position.x << "," << globeLinkPose.pose.position.y << ") -> (" <<centerXPx << "," << centerYPx << ")" <<endl;
-
-            QBrush fillBrush;
-
-
-            if(radiusPx > 5.5f){
-                QConicalGradient conicalGrad(centerXPx,centerYPx, 0);
-                conicalGrad.setColorAt(0, Qt::red);
-                conicalGrad.setColorAt(90.0/360.0, Qt::green);
-                conicalGrad.setColorAt(180.0/360.0, Qt::blue);
-                conicalGrad.setColorAt(270.0/360.0, Qt::magenta);
-                conicalGrad.setColorAt(360.0/360.0, Qt::yellow);
-
-                fillBrush = QBrush( conicalGrad );
-
-            }
-            else {
-                QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), radiusPx);
-                radialGrad.setColorAt(0, Qt::white);
-                radialGrad.setColorAt(1.0f, Qt::black);
-
-                fillBrush = QBrush( radialGrad );
-            }
-
-
-            //QBrush fillBrush( radialGrad );
-            QPainterPath fillPath;
-
-            fillPath.addEllipse(bounds);
-
-            painter.fillPath(fillPath, fillBrush);
-            //painter.save();
-
+            _pendingBlobs.push_back( blob );
         }
     }
-
-    painter.end();
-
-
-
-    sensor_msgs::Image frame;
-
-    frame.width = _animationHostImage->width();
-    frame.height = _animationHostImage->height();
-
-    frame.header.frame_id = "base_link";
-    frame.header.stamp = ros::Time();
-
-    frame.encoding = sensor_msgs::image_encodings::RGB8;
-
-    frame.data.clear();
-    frame.step = _animationHostImage->width() * 3;
-
-    for(int j=0; j<_animationHostImage->height(); j++){
-        for(int i=_animationHostImage->width()-1; i >= 0; i--){
-
-            QRgb pixel = _animationHostImage->pixel(i, j);
-
-            frame.data.push_back( qRed(pixel) );
-            frame.data.push_back( qGreen(pixel) );
-            frame.data.push_back( qBlue(pixel) );
-
-        }
-    }
-
-    _blobImagePub.publish( frame );
 }
 
 

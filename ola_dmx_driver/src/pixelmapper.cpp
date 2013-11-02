@@ -87,7 +87,6 @@ void PixelMapper::updateImage(const sensor_msgs::ImagePtr& rosImage){
 
 QImage* PixelMapper::getImage() {
     //NOTE, TODO: Not thread safe at all!
-
     return _image;
 }
 
@@ -168,20 +167,6 @@ void PixelMapper::render(){
 }
 
 
-void PixelMapper::setBackgroundColor(QColor c) {
-    _imageLock.lock();
-    _backgroundColor = c;
-    _imageDirty = true;
-    _imageLock.unlock();
-}
-
-void PixelMapper::fillBackground() {
-    _imageLock.lock();
-    _image->fill(_backgroundColor);
-    _imageDirty = true;
-    _imageLock.unlock();
-}
-
 QJsonDocument PixelMapper::toJson(){
     QJsonDocument jsonDoc;
 
@@ -216,7 +201,7 @@ bool PixelMapper::fromFile(QString filePath){
     QFile pixelMapFile(filePath);
 
     if(!pixelMapFile.open(QIODevice::ReadOnly)){
-        qCritical() << "PixelMapper::fromFile - Failed to load pixel mape from file: " << filePath;
+        qCritical() << "PixelMapper::fromFile - Failed to load pixel map from file: " << filePath;
         return false;
     }
 

@@ -93,7 +93,14 @@ include_directories(include
 # )
 
 ## Declare a cpp executable
-add_executable(pixel_map_node src/pixel_map_node.cpp src/utils.cpp src/olamanager.cpp src/ledrun.cpp src/pixelmapper.cpp src/starfield.cpp)
+add_executable(pixel_map_node
+                src/pixel_map_node.cpp
+                src/utils.cpp
+                src/olamanager.cpp
+                src/ledrun.cpp
+                src/pixelmapper.cpp
+                src/animationhost.cpp
+                src/starfield.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

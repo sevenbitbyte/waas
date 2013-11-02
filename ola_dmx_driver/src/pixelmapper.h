@@ -59,10 +59,10 @@ class PixelMapper : public QObject
         
 
     public slots:
-        //void setPixel(QPoint position, QColor);
+        /**
+         * @brief Send image to OLA pixel display
+         */
         void render();
-        void setBackgroundColor(QColor c);
-        void fillBackground();
 
 
     private:
