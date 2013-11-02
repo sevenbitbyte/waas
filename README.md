@@ -18,6 +18,14 @@ Modules
 
 Runnig
 ---
-roscore &
-roslaunch openni_launch openni.launch
-rosrun point_downsample point_downsample_node
+In seperate terminals
+
+olad						#Starts lighting console
+roscore						#Star ROS master
+roslaunch openni_launch openni.launch		#Kinect OpenNI interfaces
+rosrun point_downsample point_downsample_node	#Downsample code
+rosrun ola_dmx_driver pixel_map_node
+
+====Optional====
+rosrun waas_control waas_control		#To change parameters
+rosrun rviz rviz				#Visualization
