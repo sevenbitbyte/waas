@@ -238,37 +238,36 @@ void renderImage(const ros::TimerEvent& event){
     if(_pixelMapper->isDirty()) {
 
         _pixelMapper->render();
-    }
 
+        QImage* img = _pixelMapper->getImage();
 
-    QImage* img = _pixelMapper->getImage();
+        sensor_msgs::Image frame;
 
-    sensor_msgs::Image frame;
+        frame.width = img->width();
+        frame.height = img->height();
 
-    frame.width = img->width();
-    frame.height = img->height();
+        frame.header.frame_id = "base_link";
+        frame.header.stamp = ros::Time();
 
-    frame.header.frame_id = "base_link";
-    frame.header.stamp = ros::Time();
+        frame.encoding = sensor_msgs::image_encodings::RGB8;
 
-    frame.encoding = sensor_msgs::image_encodings::RGB8;
+        frame.data.clear();
+        frame.step = img->width() * 3;
 
-    frame.data.clear();
-    frame.step = img->width() * 3;
+        for(int j=0; j<img->height(); j++){
+            for(int i=img->width()-1; i >= 0; i--){
 
-    for(int j=0; j<img->height(); j++){
-        for(int i=img->width()-1; i >= 0; i--){
+                QRgb pixel = img->pixel(i, j);
 
-            QRgb pixel = img->pixel(i, j);
+                frame.data.push_back( qRed(pixel) );
+                frame.data.push_back( qGreen(pixel) );
+                frame.data.push_back( qBlue(pixel) );
 
-            frame.data.push_back( qRed(pixel) );
-            frame.data.push_back( qGreen(pixel) );
-            frame.data.push_back( qBlue(pixel) );
-
+            }
         }
-    }
 
-    _framePub.publish( frame );
+        _framePub.publish( frame );
+    }
 
     frameCount++;
 }

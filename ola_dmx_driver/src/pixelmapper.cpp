@@ -17,6 +17,8 @@ void PixelMapper::clearImage(QColor color){
     painter.fillRect(bounds, fillBrush);
     painter.end();
     _imageDirty = true;
+
+    _backgroundColor = QColor(Qt::black);
 }
 
 
@@ -58,6 +60,8 @@ void PixelMapper::updateImage(const sensor_msgs::ImagePtr& rosImage){
     int step = rosImage->step;
 
     _imageLock.lock();
+
+    _image->fill(_backgroundColor);
 
     for(int y=0; y < rosImage->height; y++){
         for(int x=0; x < rosImage->width; x++){
@@ -166,7 +170,7 @@ void PixelMapper::render(){
 
 void PixelMapper::setBackgroundColor(QColor c) {
     _imageLock.lock();
-    _image->fill(c);
+    _backgroundColor = c;
     _imageDirty = true;
     _imageLock.unlock();
 }
