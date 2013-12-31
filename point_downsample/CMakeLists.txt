@@ -5,7 +5,10 @@ project(point_downsample)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy sensor_msgs std_msgs genmsg tf pcl pcl_ros message_generation)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy sensor_msgs std_msgs genmsg tf pcl_msgs message_generation)
+
+find_package(PCL REQUIRED)
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -55,7 +58,7 @@ generate_messages(
 catkin_package(
 #   INCLUDE_DIRS include
 #  LIBRARIES point_downsample
-  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs tf pcl pcl_ros
+  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs tf pcl_msgs
 #  DEPENDS system_lib
 )
 
@@ -79,6 +82,7 @@ include_directories(include
   ${Qt5Core_INCLUDE_DIRS}
   ${Qt5Network_INCLUDE_DIRS}
   ${Qt5Sql_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 
@@ -97,6 +101,7 @@ add_executable(point_downsample_node src/point_downsample_node.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(point_downsample_node
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 qt5_use_modules(point_downsample_node Core Gui Sql Network)
