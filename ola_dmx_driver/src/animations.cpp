@@ -85,34 +85,30 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
     }
     painter.end();
 }
+/*
+StarSim::StarSim()
+    : maxObj(100)
+{
 
-StarSim::StarSim() { }
+}
 
 void StarSim::renderFrame(QImage *image, const RenderData &data) {
 
     ros::Time now;
-    vector<StarInfo>::iterator siitr;
 
-    siitr = objects.begin();
+    foreach(StarInfo info, state.objects)
 
-    while(siitr != objects.end()) {
-        StarInfo si = *siitr;
-
-        if (si.position[0] < 0 || si.position[0] > 30 ||
-            si.position[1] < 0 || si.position[1] > 30 ||
-            now > (st.created + si.maxDuration)) {
+        if (info.position[0] < 0 || info.position[0] > 30 ||
+            info.position[1] < 0 || info.position[1] > 30 ||
+            now > (info.created + info.maxDuration)) {
             objects.erase(siitr++);
         }
-
-        siitr++;
     }
-
-    wells = vector<StarInfo>();
 
     foreach(BlobInfo* blob, data.blobs) {
         StarInfo well;
         well.position.setValues(blob->centroid.x(), blob->centroid.y(), 0);
-        wells.push_back(well);
+        state.wells.push_back(well);
 
         double widthPx = blob->bounds.x();
         double depthPx = blob->bounds.y();
@@ -133,14 +129,12 @@ void StarSim::renderFrame(QImage *image, const RenderData &data) {
                 star.velocity[0] = cos(dir) * mag;
                 star.velocity[1] = sin(dir) * mag;
 
-                sf.objects.push_back(star);
+                state.objects.push_back(star);
             }
         }
     }
-
-    sf.wells = wells;
-
-    sf.update();
+/*
+    state.update();
 
     QPainter painter;
     painter.begin(image);
@@ -151,3 +145,4 @@ void StarSim::renderFrame(QImage *image, const RenderData &data) {
 
     painter.end();
 }
+*/

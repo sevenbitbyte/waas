@@ -5,7 +5,7 @@ project(point_downsample)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy sensor_msgs std_msgs genmsg tf pcl_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS pcl_msgs pcl_conversions roscpp sensor_msgs std_msgs genmsg tf message_generation)
 
 find_package(PCL REQUIRED)
 
@@ -56,20 +56,20 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#   INCLUDE_DIRS include
+   INCLUDE_DIRS include ${PCL_INCLUDE_DIRS}
 #  LIBRARIES point_downsample
-  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs tf pcl_msgs
+  CATKIN_DEPENDS pcl_msgs roscpp sensor_msgs std_msgs tf
 #  DEPENDS system_lib
 )
 
 #find QT libraries
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
-find_package(Qt5Sql REQUIRED)
-find_package(Qt5Network REQUIRED)
+#find_package(Qt5Core REQUIRED)
+#find_package(Qt5Gui REQUIRED)
+#find_package(Qt5Sql REQUIRED)
+#find_package(Qt5Network REQUIRED)
 
 # Instruct CMake to run moc automatically when needed.
-set(CMAKE_AUTOMOC ON)
+#set(CMAKE_AUTOMOC ON)
 
 ###########
 ## Build ##
@@ -79,9 +79,9 @@ set(CMAKE_AUTOMOC ON)
 ## Your package locations should be listed before other locations
 include_directories(include
   ${catkin_INCLUDE_DIRS}
-  ${Qt5Core_INCLUDE_DIRS}
-  ${Qt5Network_INCLUDE_DIRS}
-  ${Qt5Sql_INCLUDE_DIRS}
+  #${Qt5Core_INCLUDE_DIRS}
+  #${Qt5Network_INCLUDE_DIRS}
+  #${Qt5Sql_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
 )
 
@@ -104,7 +104,7 @@ target_link_libraries(point_downsample_node
   ${PCL_LIBRARIES}
 )
 
-qt5_use_modules(point_downsample_node Core Gui Sql Network)
+#qt5_use_modules(point_downsample_node Core Gui Sql Network)
 
 #############
 ## Install ##

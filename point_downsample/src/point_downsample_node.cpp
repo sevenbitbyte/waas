@@ -14,32 +14,52 @@
 #include <tf/transform_listener.h>
 
 // PCL specific includessresetd
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/octree/octree.h>
 #include <pcl/ModelCoefficients.h>
-#include <pcl-1.6/pcl/ros/conversions.h>
-#include <pcl-1.6/pcl/point_cloud.h>
-#include <pcl-1.6/pcl/point_types.h>
+
+#include <pcl/features/normal_3d.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/passthrough.h>
+
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/segmentation/organized_multi_plane_segmentation.h>
+#include <pcl/filters/statistical_outlier_removal.h>
+
+#include <pcl/features/normal_3d.h>
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/octree/octree.h>
+#include <pcl/segmentation/extract_clusters.h>
+
+/*
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl-1.7/pcl/point_cloud.h>
+#include <pcl-1.7/pcl/point_types.h>
 #include <pcl_ros/transforms.h>
-#include <pcl-1.6/pcl/filters/voxel_grid.h>
+#include <pcl-1.7/pcl/filters/voxel_grid.h>
 //#include <pcl-1.7/pcl/filters/plane_clipper3D.h>
-#include <pcl-1.6/pcl/features/normal_3d.h>
-#include <pcl-1.6/pcl/filters/extract_indices.h>
-#include <pcl-1.6/pcl/filters/passthrough.h>
+#include <pcl-1.7/pcl/features/normal_3d.h>
+#include <pcl-1.7/pcl/filters/extract_indices.h>
+#include <pcl-1.7/pcl/filters/passthrough.h>
 
-#include <pcl-1.6/pcl/sample_consensus/model_types.h>
-#include <pcl-1.6/pcl/sample_consensus/method_types.h>
-#include <pcl-1.6/pcl/segmentation/sac_segmentation.h>
-#include <pcl-1.6/pcl/segmentation/organized_multi_plane_segmentation.h>
-#include <pcl-1.6/pcl/filters/statistical_outlier_removal.h>
+#include <pcl-1.7/pcl/sample_consensus/model_types.h>
+#include <pcl-1.7/pcl/sample_consensus/method_types.h>
+#include <pcl-1.7/pcl/segmentation/sac_segmentation.h>
+#include <pcl-1.7/pcl/segmentation/organized_multi_plane_segmentation.h>
+#include <pcl-1.7/pcl/filters/statistical_outlier_removal.h>
 
-#include <pcl-1.6/pcl/features/normal_3d.h>
-#include <pcl-1.6/pcl/kdtree/kdtree.h>
-#include <pcl-1.6/pcl/octree/octree.h>
+#include <pcl-1.7/pcl/features/normal_3d.h>
+#include <pcl-1.7/pcl/kdtree/kdtree.h>
+#include <pcl-1.7/pcl/octree/octree.h>
 //#include <pcl-1.6/pcl
-#include <pcl-1.6/pcl/segmentation/extract_clusters.h>
+#include <pcl-1.7/pcl/segmentation/extract_clusters.h>*/
 
 #include "point_downsample/RefreshParams.h"
 
-//#include <QtGui>
 
 ros::NodeHandlePtr _nhPtr;
 
@@ -86,7 +106,7 @@ double loadRosParam(std::string param, double value=0.0f);
 void reloadParameters();
 
 //Subscriber callbacks
-void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input);
+void pointCloudCallback (const sensor_msgs::PointCloud2ConstPtr& input);
 
 //Service callbackes
 bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response);
@@ -133,11 +153,17 @@ int main(int argc, char** argv){
     _pointCloudSub = _nhPtr->subscribe ("/camera/depth/points", 1, pointCloudCallback);
 
     //Publishers
+
+
     _pointsPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/points", 1);
     _backgroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/background", 1);
     _clustersPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/clusters", 1);
     _foregroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/foreground", 1);
+
+    //Controls
     _visualizerPub = _nhPtr->advertise<visualization_msgs::MarkerArray>( "/point_downsample/markers", 0 );
+    /* TODO: There should be a bounds interactive marker for defining a ROI plus service set/getters */
+
 
     //Services
     _refreshParamServ = _nhPtr->advertiseService("/point_downsample/refresh_params", refreshParams);
@@ -157,149 +183,168 @@ void publishTransform(const ros::TimerEvent& event){
     _tfBroadcaster->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", "camera_link"));
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr backgroundCloud;
-sensor_msgs::PointCloud2 backgroundSensor;
+using sensor_msgs::PointCloud;
+using sensor_msgs::PointCloud2;
 
-void pointCloudCallback (const sensor_msgs::PointCloud2Ptr& input) {
+typedef pcl::PointCloud<pcl::PointXYZ> PCLPointCloud;
+typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PCLPointCloudPtr;
+
+PCLPointCloud inputCloud;
+//PCLPointCloud downsampledCloud;
+//PCLPointCloud* downsampledCloudPtr(new PCLPointCloud());
+PCLPointCloudPtr downsampledCloudPtr(new PCLPointCloud());
+PCLPointCloudPtr backgroundCloudPtr;
+PCLPointCloudPtr foregroundCloudPtr;
+sensor_msgs::PointCloud2 downsampledSensor;
+sensor_msgs::PointCloud2 backgroundSensor;
+sensor_msgs::PointCloud2 foregroundSensor;
+
+void pointCloudCallback (const sensor_msgs::PointCloud2ConstPtr& input) {
     if(input->data.size() <= 0){
         std::cout << "Input cloud size " << input->data.size() << std::endl;
         return;
     }
 
+    bool doCluster = (_clustersPub.getNumSubscribers() > 0) || (_visualizerPub.getNumSubscribers() > 0);
+    bool doSegment = (_backgroundPub.getNumSubscribers() > 0) || (_foregroundPub.getNumSubscribers() > 0) || doCluster;
+    bool doDownsample = (_pointsPub.getNumSubscribers() > 0) || doCluster || doSegment;
 
+    if(doDownsample){
+        pcl::fromROSMsg(*input, inputCloud);
 
-    sensor_msgs::PointCloud2 downSampledInput;
+        //pcl::PointCloudConstPtr downSampledInput(new pcl::PointCloud);
+        float leafSize = _cloudParams.downsample_leaf_size;
+        pcl::VoxelGrid<pcl::PointXYZ> downsample;
+        downsample.setInputCloud(inputCloud.makeShared());
+        downsample.setLeafSize(leafSize, leafSize, leafSize);
+        downsample.filter(  *downsampledCloudPtr );
 
-
-    //Downsample input point cloud
-    float leafSize = _cloudParams.downsample_leaf_size;
-    pcl::VoxelGrid<sensor_msgs::PointCloud2> downsample;
-    downsample.setInputCloud(input);
-    downsample.setLeafSize(leafSize, leafSize, leafSize);
-    downsample.filter(downSampledInput);
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud( new pcl::PointCloud<pcl::PointXYZ> );
-    pcl::fromROSMsg (downSampledInput, *pclCloud);
-
-    if(backgroundCloud.get() == NULL) {
-        std::cout << "Background cloud size " << input->data.size() << ", downsampled size " << downSampledInput.data.size() <<  std::endl;
-        backgroundCloud = pclCloud;
-        pcl::toROSMsg(*backgroundCloud, backgroundSensor);
-
-        if(_backgroundPub.getNumSubscribers() > 0) {
-            _backgroundPub.publish(backgroundSensor);
+        if(backgroundCloudPtr.get() == NULL){
+            backgroundCloudPtr = downsampledCloudPtr;
         }
 
-        std::cout << "Octree ready" << std::endl;
+        //Publish downsample points
+        if(_pointsPub.getNumSubscribers() > 0){
+            pcl::toROSMsg(*downsampledCloudPtr, downsampledSensor);
+            _pointsPub.publish(downsampledSensor);
+        }
     }
-
-    pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree ( _cloudParams.octree_voxel_size );
-    octree.setInputCloud(backgroundCloud);
-    octree.addPointsFromInputCloud();
-
-    octree.switchBuffers();
-
-    octree.setInputCloud(pclCloud);
-    octree.addPointsFromInputCloud();
-
 
     std::vector<int> newPointIdxVector;
+    if(doSegment){
+        pcl::octree::OctreePointCloudChangeDetector<pcl::PointXYZ> octree ( _cloudParams.octree_voxel_size );
+        octree.setInputCloud(backgroundCloudPtr);
+        octree.addPointsFromInputCloud();
 
-     // Get vector of point indices from octree voxels which did not exist in previous buffer
-    octree.getPointIndicesFromNewVoxels (newPointIdxVector);
+        octree.switchBuffers();
 
-    pcl::PointCloud<pcl::PointXYZ> foregroundCloud(*pclCloud, newPointIdxVector);
+        octree.setInputCloud(downsampledCloudPtr);
+        octree.addPointsFromInputCloud();
 
-    float foregroundPerecent = (float)foregroundCloud.points.size() / (float)backgroundCloud->points.size();
+        // Get vector of point indices from octree voxels which did not exist in previous buffer
+        octree.getPointIndicesFromNewVoxels (newPointIdxVector);
 
-    if(foregroundPerecent > _cloudParams.background_reset_threshold){
-        backgroundCloud.reset();
-        std::cout << "Reseting foreground percent=" << foregroundPerecent << std::endl;
+        foregroundCloudPtr = PCLPointCloudPtr( new PCLPointCloud(*downsampledCloudPtr, newPointIdxVector) );
+
+        float foregroundPerecent = (float)foregroundCloudPtr->points.size() / (float)backgroundCloudPtr->points.size();
+
+        if(foregroundPerecent > _cloudParams.background_reset_threshold){
+            backgroundCloudPtr.reset();
+            std::cout << "Resetting foreground percent=" << foregroundPerecent << std::endl;
+        }
+
+        //Publish foreground
+        if(_foregroundPub.getNumSubscribers() > 0){
+            pcl::toROSMsg(*foregroundCloudPtr, foregroundSensor);
+            _foregroundPub.publish(foregroundSensor);
+        }
+
+        if(_backgroundPub.getNumSubscribers() > 0){
+            pcl::toROSMsg(*backgroundCloudPtr, backgroundSensor);
+            _backgroundPub.publish(backgroundSensor);
+        }
     }
 
 
-    vector<point3d> centroids;
+    std::vector<point3d> centroids;
+    if(doCluster){
+        if(foregroundCloudPtr->points.size() > 0){
+            // Creating the KdTree object for the search method of the extraction
+            pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+            tree->setInputCloud ( foregroundCloudPtr );
 
-    if(foregroundCloud.points.size() > 0){
-        // Creating the KdTree object for the search method of the extraction
-        pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-        tree->setInputCloud ( foregroundCloud.makeShared() );
 
+            std::vector<pcl::PointIndices> cluster_indices;
+            pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+            ec.setClusterTolerance ( _cloudParams.cluster_join_distance );
+            ec.setMinClusterSize ( _cloudParams.cluster_min_size );
+            ec.setMaxClusterSize ( _cloudParams.cluster_max_size );
+            ec.setSearchMethod (tree);
+            ec.setInputCloud ( foregroundCloudPtr );
+            ec.extract (cluster_indices);
 
-        std::vector<pcl::PointIndices> cluster_indices;
-        pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-        ec.setClusterTolerance ( _cloudParams.cluster_join_distance );
-        ec.setMinClusterSize ( _cloudParams.cluster_min_size );
-        ec.setMaxClusterSize ( _cloudParams.cluster_max_size );
-        ec.setSearchMethod (tree);
-        ec.setInputCloud ( foregroundCloud.makeShared() );
-        ec.extract (cluster_indices);
+            int index=0;
 
-        int index=0;
+            ros::Time stamp = ros::Time::now();
+            pcl::PointCloud<pcl::PointXYZ> clusterCloud;
 
-        ros::Time stamp = ros::Time::now();
-        pcl::PointCloud<pcl::PointXYZ> clusterCloud;
+            visualization_msgs::MarkerArrayPtr markers( new visualization_msgs::MarkerArray );
 
-        visualization_msgs::MarkerArrayPtr markers( new visualization_msgs::MarkerArray );
+            //Loop over ever cluster
+            for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
 
-        //Loop over ever cluster
-        for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
+                float maxValues[3] = {-9000, -9000, -9000};
+                float minValues[3] = {9000, 9000, 9000};
+                float centroid[3] = {0, 0, 0};
 
-            float maxValues[3] = {-9000, -9000, -9000};
-            float minValues[3] = {9000, 9000, 9000};
-            float centroid[3] = {0, 0, 0};
+                pcl::PointCloud<pcl::PointXYZ> localCluster(*foregroundCloudPtr, it->indices);
+                clusterCloud += localCluster;
 
-            pcl::PointCloud<pcl::PointXYZ> localCluster(foregroundCloud, it->indices);
-            clusterCloud += localCluster;
+                //Loop over every point
+                for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++) {
 
-            //Loop over every point
-            for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++) {
+                    for(int i=0; i<3; i++){
+                        if(foregroundCloudPtr->points[*pit].data[i] > maxValues[i]){
+                            maxValues[i] = foregroundCloudPtr->points[*pit].data[i];
+                        }
+
+                        if(foregroundCloudPtr->points[*pit].data[i] < minValues[i]){
+                            minValues[i] = foregroundCloudPtr->points[*pit].data[i];
+                        }
+
+                        centroid[i] += foregroundCloudPtr->points[*pit].data[i];
+                    }
+                }
 
                 for(int i=0; i<3; i++){
-                    if(foregroundCloud.points[*pit].data[i] > maxValues[i]){
-                        maxValues[i] = foregroundCloud.points[*pit].data[i];
-                    }
-
-                    if(foregroundCloud.points[*pit].data[i] < minValues[i]){
-                        minValues[i] = foregroundCloud.points[*pit].data[i];
-                    }
-
-                    centroid[i] += foregroundCloud.points[*pit].data[i];
+                    centroid[i] = centroid[i] / it->indices.size();
                 }
+
+                centroids.push_back( (point3d) centroid );
+
+                visualization_msgs::MarkerArrayPtr tempMarkers = generateMarkers(centroid, maxValues, minValues, index++, stamp);
+
+                markers->markers.insert(markers->markers.begin(), tempMarkers->markers.begin(), tempMarkers->markers.end());
             }
 
-            for(int i=0; i<3; i++){
-                centroid[i] = centroid[i] / it->indices.size();
+            //Publish visualization markers
+            if(_visualizerPub.getNumSubscribers() > 0 && markers->markers.size() > 0){
+                _visualizerPub.publish(markers);
             }
 
-            centroids.push_back( (point3d) centroid );
+            //Publish clusters
+            if(_clustersPub.getNumSubscribers() > 0){
+                sensor_msgs::PointCloud2 clusterSensor;
+                pcl::toROSMsg(clusterCloud, clusterSensor);
 
-            visualization_msgs::MarkerArrayPtr tempMarkers = generateMarkers(centroid, maxValues, minValues, index++, stamp);
+                clusterSensor.header.frame_id = input->header.frame_id;
 
-            markers->markers.insert(markers->markers.begin(), tempMarkers->markers.begin(), tempMarkers->markers.end());
+                _clustersPub.publish(clusterSensor);
+            }
         }
-
-        if(_visualizerPub.getNumSubscribers() > 0 && markers->markers.size() > 0){
-            _visualizerPub.publish(markers);
-        }
-
-        sensor_msgs::PointCloud2 clusterSensor;
-        pcl::toROSMsg(clusterCloud, clusterSensor);
-
-        clusterSensor.header.frame_id = input->header.frame_id;
-
-        _clustersPub.publish(clusterSensor);
     }
 
-    if(_foregroundPub.getNumSubscribers() > 0){
-        sensor_msgs::PointCloud2 foregroundSensor;
-        pcl::toROSMsg(foregroundCloud, foregroundSensor);
-        _foregroundPub.publish(foregroundSensor);
-    }
-
-    if(_pointsPub.getNumSubscribers() > 0){
-        _pointsPub.publish(downSampledInput);
-    }
+    return;
 }
 
 double loadRosParam(std::string param, double value){

@@ -14,12 +14,14 @@ void StarInfo::updatePosition () {
     position += velocity;
 }
 
-StarfieldState::StarfieldState () { }
+StarfieldState::StarfieldState () {
 
-StarfieldState::update () {
+}
+
+void StarfieldState::update () {
     tf::Vector3 dist2;
     tf::Vector3 force;
-    tf::tfScalar newtons;
+    tfScalar newtons;
 
 /*
     foreach (StarInfo si, objects) {
@@ -42,7 +44,7 @@ StarfieldState::update () {
 
             while (dist2 == 0) {
                 si.position[0] += (rand() % 0.1);
-                si.position[1] += (rand() % 0.l);
+                si.position[1] += (rand() % 0.1);
 
                 dist2 = si.distance2(gw);
             }
@@ -53,7 +55,7 @@ StarfieldState::update () {
                 dist2 = 0.25;
             }
 
-            newtons = (StarfieldState::G * si.mass * gw.mass) / dist2;
+            newtons = (G * si.mass * gw.mass) / dist2;
             force += newtons * si.angle(gw);
         }
     }

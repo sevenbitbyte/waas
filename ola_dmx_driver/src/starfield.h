@@ -4,40 +4,42 @@
 #include <ros/ros.h>
 #include <tf/tf.h>
 
-#include <vector>
+#include <qt5/QtCore/QtCore>
+#define G (-9.8070f)
 
 using namespace std;
 
-struct StarfieldState {
-    struct StarInfo {
-        StarInfo();
-        void updatePosition();
+struct StarInfo {
+    StarInfo();
+    void updatePosition();
 
-        tf::Vector3 position;
-        tf::Vector3 velocity;
-        tf::Vector3 force;
-        tf::tfScalar mass;
-        ros::Time created;
-        tfScalar maxDuration;
-    };
+    tf::Vector3 position;
+    tf::Vector3 velocity;
+    tf::Vector3 force;
+    tfScalar mass;
+    ros::Time created;
+    tfScalar maxDuration;
+};
 
-    vector<StarInfo> wells;     //Non moving gravity wells
-    vector<StarInfo> objects;   //Moving objects
+class StarfieldState {
+    public:
 
-    static const tfScalar G = -9.81;
+        QList<StarInfo> wells;     //Non moving gravity wells
+        QList<StarInfo> objects;   //Moving objects
 
-    StarfieldState();
+        //static const tfScalar G = -9.81;
 
-    /**
-     * @brief update
-     *          -Remove old objects
-     *          -Compute object forces
-     *          -Update object physics {position, velocity, momentum}
-     *
-     */
-    void update();
+        StarfieldState();
 
-    //tf::Vector3 computeGravitationalForce(tf::Vector3 position);
+        /**
+         * @brief update
+         *          -Remove old objects
+         *          -Compute object forces
+         *          -Update object physics {position, velocity, momentum}
+         *
+         */
+        void update();
+
 
 };
 
