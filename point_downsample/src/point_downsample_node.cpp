@@ -192,7 +192,7 @@ typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PCLPointCloudPtr;
 PCLPointCloud inputCloud;
 //PCLPointCloud downsampledCloud;
 //PCLPointCloud* downsampledCloudPtr(new PCLPointCloud());
-PCLPointCloudPtr downsampledCloudPtr(new PCLPointCloud());
+
 PCLPointCloudPtr backgroundCloudPtr;
 PCLPointCloudPtr foregroundCloudPtr;
 sensor_msgs::PointCloud2 downsampledSensor;
@@ -208,6 +208,10 @@ void pointCloudCallback (const sensor_msgs::PointCloud2ConstPtr& input) {
     bool doCluster = (_clustersPub.getNumSubscribers() > 0) || (_visualizerPub.getNumSubscribers() > 0);
     bool doSegment = (_backgroundPub.getNumSubscribers() > 0) || (_foregroundPub.getNumSubscribers() > 0) || doCluster;
     bool doDownsample = (_pointsPub.getNumSubscribers() > 0) || doCluster || doSegment;
+
+    PCLPointCloudPtr downsampledCloudPtr(new PCLPointCloud());
+
+    std::cout << "Input cloud size " << input->data.size() << "\t " << doCluster << ", " << doSegment << ", " << doDownsample << std::endl;
 
     if(doDownsample){
         pcl::fromROSMsg(*input, inputCloud);
