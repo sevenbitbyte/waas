@@ -38,6 +38,7 @@ set(ROS_BUILD_TYPE Debug)
 add_service_files(
   FILES
   RefreshParams.srv
+  ResetBackground.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

@@ -50,7 +50,7 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
                       radiusPx);
         QBrush fillBrush;
 
-        if(radiusPx > 5.5f){
+        if(radiusPx > 3.5f){
             QConicalGradient conicalGrad(centerXPx,centerYPx, 0);
             conicalGrad.setColorAt(0, Qt::red);
             conicalGrad.setColorAt(90.0/360.0, Qt::green);
@@ -66,11 +66,11 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
             QColor white(Qt::white);
             white.setHsvF(0, 0, 1.0-position);
 
-            QColor black(0, 0, 0);
-            black.setAlphaF(position);
+            QColor pink(Qt::magenta);
+            pink.setAlphaF(position);
 
             radialGrad.setColorAt(0, white);
-            radialGrad.setColorAt(1.0f, black);
+            radialGrad.setColorAt(1.0f, pink);
 
             fillBrush = QBrush( radialGrad );
         }

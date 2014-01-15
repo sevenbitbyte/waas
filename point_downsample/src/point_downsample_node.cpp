@@ -59,6 +59,7 @@
 #include <pcl-1.7/pcl/segmentation/extract_clusters.h>*/
 
 #include "point_downsample/RefreshParams.h"
+#include "point_downsample/ResetBackground.h"
 
 
 ros::NodeHandlePtr _nhPtr;
@@ -72,6 +73,7 @@ ros::Publisher _visualizerPub;
 ros::Subscriber _pointCloudSub;
 
 ros::ServiceServer _refreshParamServ;
+ros::ServiceServer _resetBackgroundServ;
 
 tf::TransformBroadcaster* _tfBroadcaster = NULL;
 tf::TransformListener* _tfListener = NULL;
@@ -92,6 +94,7 @@ struct CloudProcessParams{
     double cluster_join_distance;
     double cluster_min_size;
     double cluster_max_size;
+    bool reset_request;
 };
 
 tf::Vector3 _kinectPosition;
@@ -110,6 +113,8 @@ void pointCloudCallback (const sensor_msgs::PointCloud2ConstPtr& input);
 
 //Service callbackes
 bool refreshParams(RefreshParams::Request &request, RefreshParams::Response &response);
+
+//bool resetBackground()
 
 //Helper functions
 //void updateTransform();
@@ -210,8 +215,6 @@ void pointCloudCallback (const sensor_msgs::PointCloud2ConstPtr& input) {
     bool doDownsample = (_pointsPub.getNumSubscribers() > 0) || doCluster || doSegment;
 
     PCLPointCloudPtr downsampledCloudPtr(new PCLPointCloud());
-
-    std::cout << "Input cloud size " << input->data.size() << "\t " << doCluster << ", " << doSegment << ", " << doDownsample << std::endl;
 
     if(doDownsample){
         pcl::fromROSMsg(*input, inputCloud);

@@ -20,31 +20,21 @@ ROS Services Provided
 ---
 * /point_downsample/refresh_params
 * /point_downsample/store_params
-* /point_downsample/set_position
-* /point_downsample/set_orientation
-* /point_downsample/get_position
-* /point_downsample/get_orientation
-* /point_downsample/set_leaf_size
-* /point_downsample/enable_imu
-    bool continous_update
-    int min_samples
-    int period
-* /point_downsample/enable_plane_detect
-    bool continous_update
-    int min_samples
-    int period
-
 
 ROS Parameters
 ---
-* /point_downsample/input/imu_topic
-* /point_downsample/input/cloud_topic
-* /point_downsample/orientation/use_imu
-* /point_downsample/leaf_size
-* /point_downsample/orientation/find_ground
-* /point_downsample/orientation/position/x
-* /point_downsample/orientation/position/y
-* /point_downsample/orientation/position/z
+* /waas/cloud/position/x
+* /waas/cloud/position/y
+* /waas/cloud/position/z
+* /waas/cloud/orientation/roll
+* /waas/cloud/orientation/pitch
+* /waas/cloud/orientation/yaw
+* /waas/downsample_leaf_size
+* /waas/octree_voxel_size
+* /waas/background_reset_threshold
+* /waas/cluster_join_distance
+* /waas/cluster_min_size
+* /waas/cluster_max_size
 
 
 
