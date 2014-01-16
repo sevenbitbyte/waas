@@ -52,7 +52,7 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
         QBrush fillBrush;
 
         if(radius > 0.75f){
-            QConicalGradient conicalGrad(centerXPx,centerYPx, position);
+            QConicalGradient conicalGrad(centerXPx,centerYPx, position*360.0f);
             conicalGrad.setColorAt(0, Qt::red);
             conicalGrad.setColorAt(90.0/360.0, Qt::green);
             conicalGrad.setColorAt(180.0/360.0, Qt::blue);
