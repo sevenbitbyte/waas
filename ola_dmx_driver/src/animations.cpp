@@ -30,7 +30,7 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
         ros::Duration delta = data.timestamp - blob->timestamp;
 
         double durationDelta = (double) (delta.toNSec() % duration.toNSec());
-        double position = durationDelta / (double) duration.toNSec();
+        qreal position = durationDelta / (double) duration.toNSec();
 
         if(delta > duration){
             continue;
@@ -58,8 +58,6 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
             conicalGrad.setColorAt(180.0/360.0, Qt::blue);
             conicalGrad.setColorAt(270.0/360.0, Qt::magenta);
             conicalGrad.setColorAt(360.0/360.0, Qt::yellow);
-
-            conicalGrad.setAngle();
 
             fillBrush = QBrush( conicalGrad );
 
