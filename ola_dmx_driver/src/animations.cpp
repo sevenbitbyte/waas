@@ -43,6 +43,7 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
         double centerYPx = blob->centroid.y();
 
         double radiusPx = qMax(widthPx, depthPx);
+        double radius = qMax(blob->realDimensions.x(), blob->realDimensions.y());
 
         QRectF bounds(centerXPx - (widthPx/2.0f),
                       centerYPx - (depthPx/2.0f),
@@ -50,7 +51,7 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
                       radiusPx);
         QBrush fillBrush;
 
-        if(radiusPx > 3.5f){
+        if(radius > 2.5f){
             QConicalGradient conicalGrad(centerXPx,centerYPx, 0);
             conicalGrad.setColorAt(0, Qt::red);
             conicalGrad.setColorAt(90.0/360.0, Qt::green);
@@ -85,7 +86,8 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
     }
     painter.end();
 }
-/*
+
+
 StarSim::StarSim()
     : maxObj(100)
 {
@@ -96,17 +98,23 @@ void StarSim::renderFrame(QImage *image, const RenderData &data) {
 
     ros::Time now;
 
-    foreach(StarInfo info, state.objects)
+    //Clean up old objects
+    QList<StarInfo>::iterator objectIter = state.objects.begin();
+    while(objectIter != state.objects.end()){
+        if (objectIter->position.x() < image->width() || objectIter->position.x() > image->width() ||
+            objectIter->position.y() < image->height() || objectIter->position.y() > image->height() ||
+            now > (objectIter->created + ros::Duration(objectIter->maxDuration) )) {
 
-        if (info.position[0] < 0 || info.position[0] > 30 ||
-            info.position[1] < 0 || info.position[1] > 30 ||
-            now > (info.created + info.maxDuration)) {
-            objects.erase(siitr++);
+            objectIter = state.objects.erase(objectIter);
+        }
+        else{
+            objectIter++;
         }
     }
 
-    foreach(BlobInfo* blob, data.blobs) {
-        StarInfo well;
+
+
+        /*
         well.position.setValues(blob->centroid.x(), blob->centroid.y(), 0);
         state.wells.push_back(well);
 
@@ -131,10 +139,10 @@ void StarSim::renderFrame(QImage *image, const RenderData &data) {
 
                 state.objects.push_back(star);
             }
-        }
-    }
-/*
-    state.update();
+        }*/
+    //}
+
+    /*state.update();
 
     QPainter painter;
     painter.begin(image);
@@ -143,6 +151,5 @@ void StarSim::renderFrame(QImage *image, const RenderData &data) {
 
 
 
-    painter.end();
+    painter.end();*/
 }
-*/

@@ -12,6 +12,7 @@
 struct BlobInfo {
     tf::Vector3 centroid;
     tf::Vector3 bounds;
+    tf::Vector3 realDimensions;
     ros::Time timestamp;
 };
 
@@ -40,6 +41,24 @@ class BlobTracker {
         tfScalar _maxJoinRadius;
 };
 
+/*
+class Effect : public Animation {
+    public:
+        virtual void renderFrame(QImage* image, const RenderData& data);
+
+    private:
+        RenderData _startInfo;
+        QMap<int, Animation*> _animations;
+};
+
+class EffectEngine {
+    public:
+
+    private:
+        //QList
+
+};*/
+
 class AnimationHost {
     public:
         AnimationHost(QString pixelMapPath, QSharedPointer<RenderData> data);
@@ -57,6 +76,9 @@ class AnimationHost {
     private:
         OlaManager* _olaManager;
         PixelMapper* _pixelMapper;
+
+        //EffectEngine* _effectEngine;
+
         QMap<int, Animation*> _animations;
         QSharedPointer<RenderData> _dataPtr;
         int _frameCount;

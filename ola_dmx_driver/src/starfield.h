@@ -19,6 +19,8 @@ struct StarInfo {
     tfScalar mass;
     ros::Time created;
     tfScalar maxDuration;
+
+    bool operator==(const StarInfo& other);
 };
 
 class StarfieldState {

@@ -87,6 +87,10 @@ int main(int argc, char** argv){
     ros::init (argc, argv, "pixel_map_node");
     _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
 
+    std::string pixelMapPath = QDir::homePath().toStdString();
+    pixelMapPath.append("/.waas/pixel_map.json");
+    _nhPtr->param("pixel_map", pixelMapPath, pixelMapPath);
+
     _dataPtr = QSharedPointer<RenderData>( new RenderData );
     _dataPtr->timestamp = ros::Time::now();
     _blobTracker = new BlobTracker(_dataPtr);
@@ -131,59 +135,6 @@ int main(int argc, char** argv){
 
 	return 0;
 }
-
-struct Blip {
-    QPointF position;
-    QDateTime startTime;
-    QDateTime endTime;
-    QColor startColor;
-    QColor endColor;
-};
-
-QVector<Blip> idleBlips;
-
-void updateIdleAnimation(){
-    QDateTime now = QDateTime::currentDateTimeUtc();
-
-    /*
-
-    if(idleBlips.count() < 5){
-        int newBlips = qrand() % 50;
-
-        int width = _pixelMapper->width();
-        int height = _pixelMapper->height();
-
-        for(int i=0; i<newBlips; i++){
-            int delayMs = qrand() % 25000;
-            int durationMs = qrand() % 15000;
-
-            Blip b;
-
-            b.position.setX( qrand() % width );
-            b.position.setY( qrand() % height );
-            b.startTime = now.addMSecs(delayMs);
-            b.endTime = b.startTime.addMSecs(delayMs);
-
-            b.startColor = QColor(Qt::black);
-            b.endColor = QColor(Qt::white);
-
-            idleBlips.push_back(b);
-        }
-    }
-
-    for(int i=0; i<idleBlips.size(); i++){
-        Blip b = idleBlips[i];
-        
-        if(b.endTime < now){
-            
-        }
-        
-        qreal progress = 
-    }
-
-    */
-}
-
 
 
 void renderImage(const ros::TimerEvent& event){
@@ -235,7 +186,7 @@ void publishGlobeTransform(const ros::TimerEvent& event){
     _tfBroadcaster->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link", "globes_link"));
 
     if(_lightVizPub.getNumSubscribers() > 0){
-        publishGlobeMarkers();;
+        publishGlobeMarkers();
     }
 }
 
@@ -325,8 +276,9 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
 
             BlobInfo* blob = new BlobInfo;
 
+            blob->realDimensions.setValue( marker.scale.x, marker.scale.y, marker.scale.z );
             blob->bounds.setValue( deltaXPx, deltaYPx, deltaZPx );
-            blob->centroid.setValue( centerXPx, centerYPx, 0 );
+            blob->centroid.setValue( centerXPx, centerYPx, globeLinkPose.pose.position.z );
             blob->timestamp = ros::Time::now();
 
             _pendingBlobs.push_back( blob );

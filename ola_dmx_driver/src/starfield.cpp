@@ -14,6 +14,15 @@ void StarInfo::updatePosition () {
     position += velocity;
 }
 
+bool StarInfo::operator==(const StarInfo& other){
+    return ( (this->created == other.created) &&
+           (this->force == other.force) &&
+           (this->mass == other.mass) &&
+           (this->maxDuration == other.maxDuration) &&
+           (this->position == other.position) &&
+           (this->velocity == other.velocity) );
+}
+
 StarfieldState::StarfieldState () {
 
 }
@@ -36,7 +45,7 @@ void StarfieldState::update () {
     }
 */
 
-    foreach (StarInfo si, objects) {
+    /*foreach (StarInfo si, objects) {
         force.setValue(0,0,0);
 
         foreach (StarInfo gw, wells) {
@@ -61,6 +70,6 @@ void StarfieldState::update () {
     }
 
     foreach (StarInfo si, objects) {
-	si.updatePosition();
-    }
+        si.updatePosition();
+    }*/
 }

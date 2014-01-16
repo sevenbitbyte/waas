@@ -2,7 +2,7 @@
 #define ANIMATIONS_H
 
 #include "animationhost.h"
-//#include "starfield.h"
+#include "starfield.h"
 
 class FillFade : public Animation {
     public:
@@ -20,9 +20,10 @@ class StarPath : public Animation {
         virtual void renderFrame(QImage* image, const RenderData& data);
 
         ros::Duration duration;
+
 };
 
-/*
+
 class StarSim : public Animation {
     public:
         StarSim();
@@ -31,6 +32,6 @@ class StarSim : public Animation {
         StarfieldState state;
 
         int maxObj;
-};*/
+};
 
 #endif  //
