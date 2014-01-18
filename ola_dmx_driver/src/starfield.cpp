@@ -27,7 +27,7 @@ StarInfo::StarInfo(int id, BlobInfo* blob, ObjectType t, PositionMethod m) {
     created = ros::Time::now();
     maxDuration = ros::Duration(0, 0);
 
-    radius = 1.0f;
+    radius = 6.0f;
     type = t;
     method = m;
     trackedBlobId = id;
@@ -48,7 +48,7 @@ bool StarInfo::operator==(const StarInfo& other){
 }
 
 Starfield::Starfield() {
-    _gravity = -1.0f;
+    _gravity = -3.0f;
     _minStars = 30;
     _maxStars = 100;
     _starCount = 0;
@@ -222,7 +222,8 @@ void Starfield::update(const RenderData& blobs) {
             if(well->type == StarInfo::Star){ continue; }
 
             tf::Vector3 d = star->position - well->position;
-            double dist2 = d.length2();
+            double dist2 = d.length();
+            dist2 = dist2*dist2;
 
             // TODO: Hardcoded the minimum distance,
             // support configurable minimum if needed
