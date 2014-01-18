@@ -13,6 +13,10 @@ StarInfo::StarInfo(ObjectType t, PositionMethod m) {
     type = t;
     method = m;
     trackedBlobId = -1;
+
+    if(t == Star){
+        maxDuration.fromSec( (((double)qrand()) / 100.0f) * 5.0f );
+    }
 }
 
 StarInfo::StarInfo(int id, BlobInfo* blob, ObjectType t, PositionMethod m) {
@@ -44,7 +48,7 @@ bool StarInfo::operator==(const StarInfo& other){
 }
 
 Starfield::Starfield() {
-    _gravity = -.2f;
+    _gravity = -1.0f;
     _minStars = 30;
     _maxStars = 100;
     _starCount = 0;
@@ -312,10 +316,10 @@ void StarSim::renderFrame(QImage* image, const RenderData& data) {
         }
         else if(star->type == StarInfo::Attractor){
             QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), widthPx);
-            QColor white(Qt::red);
+            QColor white(Qt::white);
             white.setHsvF(0, 0, 1.0 - agePercent);
 
-            QColor pink(Qt::white);
+            QColor pink(Qt::red);
 
             radialGrad.setColorAt(0, white);
             radialGrad.setColorAt(1.0f, pink);
@@ -337,7 +341,7 @@ void StarSim::renderFrame(QImage* image, const RenderData& data) {
         else if(star->type == StarInfo::Repulsor){
             QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), widthPx);
             QColor white(Qt::blue);
-            white.setHsvF(0, 0, 1.0 - agePercent);
+            white.setHsvF(0, 0, 1.0);
 
             QColor pink(Qt::white);
 
