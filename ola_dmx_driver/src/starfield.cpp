@@ -221,7 +221,7 @@ void Starfield::update(const RenderData& blobs) {
             continue;
         }
 
-        //star->force.setValue(0,0,0);
+        star->force.setValue(0,0,0);
 
 
         QList<StarInfo*>::iterator starIter = _stars.begin();
