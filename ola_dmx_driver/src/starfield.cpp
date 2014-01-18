@@ -48,7 +48,7 @@ bool StarInfo::operator==(const StarInfo& other){
 }
 
 Starfield::Starfield() {
-    _gravity = -0.01f;
+    _gravity = -0.2f;
     _minStars = 3;
     _maxStars = 40;
     _starCount = 0;
@@ -213,7 +213,7 @@ void Starfield::update(const RenderData& blobs) {
             continue;
         }
 
-        star->force.setValue(0,0,0);
+        /star->force.setValue(0,0,0);
 
 
         QList<StarInfo*>::iterator starIter = _stars.begin();
