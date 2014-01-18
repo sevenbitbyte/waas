@@ -52,7 +52,7 @@ bool StarInfo::operator==(const StarInfo& other){
 }
 
 Starfield::Starfield() {
-    _gravity = -0.02f;
+    _gravity = -0.01f;
     _minStars = 3;
     _maxStars = 40;
     _starCount = 0;
@@ -217,7 +217,7 @@ void Starfield::update(const RenderData& blobs) {
             continue;
         }
 
-        star->force.setValue(0,0,0);
+        //star->force.setValue(0,0,0);
 
 
         QList<StarInfo*>::iterator starIter = _stars.begin();
@@ -260,11 +260,11 @@ StarSim::StarSim(){
     mainEmitter->position.setY(16);
 
     StarInfo* mainRepulsor = new StarInfo(StarInfo::Repulsor, StarInfo::Static);
-    mainRepulsor->position.setX(8);
+    mainRepulsor->position.setX(16);
     mainRepulsor->position.setY(8);
 
     StarInfo* mainAttractor = new StarInfo(StarInfo::Attractor, StarInfo::Static);
-    mainAttractor->position.setX(8);
+    mainAttractor->position.setX(16);
     mainAttractor->position.setY(24);
 
     state->insertStar(mainEmitter);
@@ -324,7 +324,6 @@ void StarSim::renderFrame(QImage* image, const RenderData& data) {
         else if(star->type == StarInfo::Attractor){
             QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), widthPx);
             QColor white(Qt::darkRed);
-            white.setHsvF(0, 0, 1.0 - agePercent);
 
             QColor pink(Qt::red);
 
@@ -336,7 +335,6 @@ void StarSim::renderFrame(QImage* image, const RenderData& data) {
         else if(star->type == StarInfo::Emitter){
             QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), widthPx);
             QColor white(Qt::darkGreen);
-            white.setHsvF(0, 0, 1.0 - agePercent);
 
             QColor pink(Qt::green);
 
@@ -348,8 +346,6 @@ void StarSim::renderFrame(QImage* image, const RenderData& data) {
         else if(star->type == StarInfo::Repulsor){
             QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), widthPx);
             QColor white(Qt::blue);
-            white.setHsvF(0, 0, 1.0);
-
             QColor pink(Qt::darkBlue);
 
             radialGrad.setColorAt(0, white);
