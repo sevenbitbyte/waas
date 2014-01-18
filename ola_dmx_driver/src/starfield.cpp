@@ -48,9 +48,9 @@ bool StarInfo::operator==(const StarInfo& other){
 }
 
 Starfield::Starfield() {
-    _gravity = -3.0f;
-    _minStars = 30;
-    _maxStars = 100;
+    _gravity = -9.0f;
+    _minStars = 3;
+    _maxStars = 10;
     _starCount = 0;
     _emitProbability = 0.05f;
     //_bounds = bounds;
@@ -227,7 +227,7 @@ void Starfield::update(const RenderData& blobs) {
 
             // TODO: Hardcoded the minimum distance,
             // support configurable minimum if needed
-            if (dist2 < 0.01f) {
+            if (dist2 < well->radius) {
                 dist2=0.01f;
             }
 
@@ -235,6 +235,7 @@ void Starfield::update(const RenderData& blobs) {
 
             force += newtons * d;
         }
+        qDebug() << "Force=" << force.length2() << " velocity=" << star->velocity.length2();
         star->updatePosition();
         physicsStars++;
     }
