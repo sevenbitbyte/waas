@@ -161,7 +161,7 @@ void Starfield::update(const RenderData& blobs) {
                 for(emitterIter; emitterIter != _starsByType.end() && emitMax > 0; emitterIter++){
                     StarInfo* s = emitterIter.value();
 
-                    tfScalar range = s->radius * ((double)(qrand()%100) / 100.0f);
+                    tfScalar range = (s->radius * ((double)(qrand()%100) / 100.0f)) + s->radius;
                     tfScalar angle = 2.0f * M_PI * ((double)(qrand()%100) / 100.0f);
 
                     tf::Vector3 shift;
