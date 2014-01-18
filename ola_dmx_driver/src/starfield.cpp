@@ -236,7 +236,13 @@ void Starfield::update(const RenderData& blobs) {
             // TODO: Hardcoded the minimum distance,
             // support configurable minimum if needed
             if (dist2 < well->radius) {
-                dist2=0.01f;
+
+                if(StarInfo::Attractor == well->type){
+                    removeLater.push_back(star);
+                    break;
+                }
+
+                dist2=0.001f;
             }
 
             newtons = (_gravity * star->mass * well->mass) / dist2;
@@ -265,11 +271,11 @@ StarSim::StarSim(){
 
     StarInfo* mainRepulsor = new StarInfo(StarInfo::Repulsor, StarInfo::Static);
     mainRepulsor->position.setX(16);
-    mainRepulsor->position.setY(8);
+    mainRepulsor->position.setY(16);
 
     StarInfo* mainAttractor = new StarInfo(StarInfo::Attractor, StarInfo::Static);
-    mainAttractor->position.setX(16);
-    mainAttractor->position.setY(24);
+    mainAttractor->position.setX(8);
+    mainAttractor->position.setY(8);
 
     state->insertStar(mainEmitter);
     state->insertStar(mainRepulsor);
