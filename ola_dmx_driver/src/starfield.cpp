@@ -66,7 +66,7 @@ void Starfield::insertStar(StarInfo* s) {
     }
 
     if(s->type == StarInfo::Star){
-        _starCount--;
+        _starCount++;
     }
 }
 
