@@ -31,6 +31,10 @@ StarInfo::StarInfo(int id, BlobInfo* blob, ObjectType t, PositionMethod m) {
     type = t;
     method = m;
     trackedBlobId = id;
+
+    if(t == Repulsor){
+        mass = -mass;
+    }
 }
 
 void StarInfo::updatePosition () {
@@ -48,7 +52,7 @@ bool StarInfo::operator==(const StarInfo& other){
 }
 
 Starfield::Starfield() {
-    _gravity = -0.2f;
+    _gravity = -0.02f;
     _minStars = 3;
     _maxStars = 40;
     _starCount = 0;
@@ -219,7 +223,7 @@ void Starfield::update(const RenderData& blobs) {
         QList<StarInfo*>::iterator starIter = _stars.begin();
         for(; starIter != _stars.end(); starIter++) {
             StarInfo* well = *starIter;
-            if(well->type == StarInfo::Star){ continue; }
+            if(well->type == StarInfo::Star || well->type == StarInfo::Emitter){ continue; }
 
             tf::Vector3 d = star->position - well->position;
             double dist2 = d.length();
@@ -319,7 +323,7 @@ void StarSim::renderFrame(QImage* image, const RenderData& data) {
         }
         else if(star->type == StarInfo::Attractor){
             QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), widthPx);
-            QColor white(Qt::white);
+            QColor white(Qt::darkRed);
             white.setHsvF(0, 0, 1.0 - agePercent);
 
             QColor pink(Qt::red);
@@ -331,7 +335,7 @@ void StarSim::renderFrame(QImage* image, const RenderData& data) {
         }
         else if(star->type == StarInfo::Emitter){
             QRadialGradient radialGrad(QPointF(centerXPx,centerYPx), widthPx);
-            QColor white(Qt::white);
+            QColor white(Qt::darkGreen);
             white.setHsvF(0, 0, 1.0 - agePercent);
 
             QColor pink(Qt::green);
@@ -346,7 +350,7 @@ void StarSim::renderFrame(QImage* image, const RenderData& data) {
             QColor white(Qt::blue);
             white.setHsvF(0, 0, 1.0);
 
-            QColor pink(Qt::white);
+            QColor pink(Qt::darkBlue);
 
             radialGrad.setColorAt(0, white);
             radialGrad.setColorAt(1.0f, pink);
