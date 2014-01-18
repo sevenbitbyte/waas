@@ -72,7 +72,7 @@ class StarSim : public Animation {
         StarSim();
         virtual void renderFrame(QImage* image, const RenderData& data);
 
-        Starfield state;
+        Starfield* state;
 };
 
 #endif  //STARFIELD_H

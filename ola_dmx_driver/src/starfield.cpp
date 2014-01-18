@@ -136,7 +136,7 @@ void Starfield::update(const RenderData& blobs) {
     if(_starCount < _maxStars) {
         bool emitReq = false;
 
-        if(_starCount < _minStars) {
+        if(_starCount > _minStars) {
             float v = (float)(qrand()%100) / 100.0f;
 
             emitReq = (v < _emitProbability);
@@ -242,27 +242,34 @@ QList<StarInfo*> Starfield::getStars() const {
 }
 
 StarSim::StarSim(){
+    state = new Starfield();
+
     StarInfo* mainEmitter = new StarInfo(StarInfo::Emitter, StarInfo::Static);
-    mainEmitter->position.setX(0);
-    mainEmitter->position.setY(0);
+    mainEmitter->position.setX(8);
+    mainEmitter->position.setY(8);
 
     StarInfo* mainRepulsor = new StarInfo(StarInfo::Repulsor, StarInfo::Static);
-    mainRepulsor->position.setX(0);
-    mainRepulsor->position.setY(0);
+    mainRepulsor->position.setX(8);
+    mainRepulsor->position.setY(8);
 
-    state.insertStar(mainEmitter);
-    state.insertStar(mainRepulsor);
+    StarInfo* mainAttractor = new StarInfo(StarInfo::Attractor, StarInfo::Static);
+    mainAttractor->position.setX(16);
+    mainAttractor->position.setY(16);
+
+    state->insertStar(mainEmitter);
+    state->insertStar(mainRepulsor);
+    state->insertStar(mainAttractor);
 }
 
 
 void StarSim::renderFrame(QImage* image, const RenderData& data) {
     QRectF bounds = image->rect();
-    state.setBounds( bounds );
+    state->setBounds( bounds );
 
     //Update physics
-    state.update(data);
+    state->update(data);
 
-    QList<StarInfo*> stars = state.getStars();
+    QList<StarInfo*> stars = state->getStars();
 
     QPainter painter;
     painter.begin( image );
