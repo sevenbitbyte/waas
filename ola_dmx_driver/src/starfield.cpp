@@ -23,7 +23,7 @@ StarInfo::StarInfo(int id, BlobInfo* blob, ObjectType t, PositionMethod m) {
     position = blob->centroid;
     velocity.setValue(0,0,0);
     force.setValue(0,0,0);
-    mass = 1.0f;
+    mass = 0.5f;
     created = ros::Time::now();
     maxDuration = ros::Duration(0, 0);
 
@@ -252,16 +252,16 @@ StarSim::StarSim(){
     state = new Starfield();
 
     StarInfo* mainEmitter = new StarInfo(StarInfo::Emitter, StarInfo::Static);
-    mainEmitter->position.setX(8);
-    mainEmitter->position.setY(8);
+    mainEmitter->position.setX(16);
+    mainEmitter->position.setY(16);
 
     StarInfo* mainRepulsor = new StarInfo(StarInfo::Repulsor, StarInfo::Static);
     mainRepulsor->position.setX(8);
     mainRepulsor->position.setY(8);
 
     StarInfo* mainAttractor = new StarInfo(StarInfo::Attractor, StarInfo::Static);
-    mainAttractor->position.setX(16);
-    mainAttractor->position.setY(16);
+    mainAttractor->position.setX(8);
+    mainAttractor->position.setY(24);
 
     state->insertStar(mainEmitter);
     state->insertStar(mainRepulsor);
