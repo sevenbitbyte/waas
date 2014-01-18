@@ -9,7 +9,7 @@ StarInfo::StarInfo(ObjectType t, PositionMethod m) {
     created = ros::Time::now();
     maxDuration = ros::Duration(0, 0);
 
-    radius = 0.15f;
+    radius = 1.0f;
     type = t;
     method = m;
     trackedBlobId = -1;
@@ -23,7 +23,7 @@ StarInfo::StarInfo(int id, BlobInfo* blob, ObjectType t, PositionMethod m) {
     created = ros::Time::now();
     maxDuration = ros::Duration(0, 0);
 
-    radius = 0.2f;
+    radius = 1.0f;
     type = t;
     method = m;
     trackedBlobId = id;
