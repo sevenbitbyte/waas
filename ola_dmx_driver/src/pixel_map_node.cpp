@@ -29,6 +29,7 @@
 //#include "point_downsample/RefreshParams.h"
 #include "animationhost.h"
 #include "animations.h"
+#include "starfield.h"
 
 #include "ola_dmx_driver/RefreshParams.h"
 //#include "starfield.h"
@@ -99,8 +100,11 @@ int main(int argc, char** argv){
     Animation* fill = new FillFade();
     _animationHost->insertLayer(0, fill);
 
+    Animation* starsim = new StarSim();
+    _animationHost->insertLayer(1, starsim);
+
     Animation* starPath = new StarPath();
-    _animationHost->insertLayer(1, starPath);
+    _animationHost->insertLayer(2, starPath);
 
     _tfListener = new tf::TransformListener();
     tf::TransformBroadcaster _broadcaster;
@@ -220,13 +224,13 @@ void publishGlobeMarkers(){
     for(pixelIter; pixelIter != pixelData.end(); pixelIter++){
         //Load position
         geometry_msgs::Point pt;
-        pt.x = pixelIter.value().first().x() * _globeSpacing.x;
-        pt.y = pixelIter.value().first().y() * _globeSpacing.y;
+        pt.x = pixelIter.value().first.x() * _globeSpacing.x;
+        pt.y = pixelIter.value().first.y() * _globeSpacing.y;
 
         globeMarker.points.push_back( pt );
 
         //Load color
-        QColor qColor(pixelIter.value());
+        QColor qColor(pixelIter.value().second);
         std_msgs::ColorRGBA c;
         c.a = 1.0;
         c.r = qColor.redF();
