@@ -15,7 +15,7 @@ StarInfo::StarInfo(ObjectType t, PositionMethod m) {
     trackedBlobId = -1;
 
     if(t == Star){
-        maxDuration.fromSec( (((double)qrand()) / 100.0f) * 5.0f );
+        maxDuration = maxDuration.fromSec( (((double)qrand() % 100) / 100.0f) * 5.0f );
     }
 }
 
@@ -187,7 +187,6 @@ void Starfield::update(const RenderData& blobs) {
 
     while(physicsStars != _starsByMethod.end()) {
         tfScalar dist2;
-        tf::Vector3 force;
         tfScalar newtons;
         StarInfo* star = physicsStars.value();
         if(star->method != StarInfo::Physics) { break; }
@@ -214,7 +213,8 @@ void Starfield::update(const RenderData& blobs) {
             continue;
         }
 
-        force.setValue(0,0,0);
+        star->force.setValue(0,0,0);
+
 
         QList<StarInfo*>::iterator starIter = _stars.begin();
         for(; starIter != _stars.end(); starIter++) {
@@ -233,8 +233,9 @@ void Starfield::update(const RenderData& blobs) {
 
             newtons = (_gravity * star->mass * well->mass) / dist2;
 
-            force += newtons * d;
+            star->force += newtons * d;
         }
+
         qDebug() << "Force=" << force.length2() << " velocity=" << star->velocity.length2();
         star->updatePosition();
         physicsStars++;
