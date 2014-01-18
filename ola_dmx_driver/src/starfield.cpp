@@ -15,7 +15,7 @@ StarInfo::StarInfo(ObjectType t, PositionMethod m) {
     trackedBlobId = -1;
 
     if(t == Star){
-        maxDuration = maxDuration.fromSec( (((double)qrand() % 100) / 100.0f) * 5.0f );
+        maxDuration = maxDuration.fromSec( ((double)(qrand() % 100) / 100.0f) * 5.0f );
     }
 }
 
@@ -236,7 +236,7 @@ void Starfield::update(const RenderData& blobs) {
             star->force += newtons * d;
         }
 
-        qDebug() << "Force=" << force.length2() << " velocity=" << star->velocity.length2();
+        qDebug() << "Force=" << star->force.length2() << " velocity=" << star->velocity.length2();
         star->updatePosition();
         physicsStars++;
     }
