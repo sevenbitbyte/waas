@@ -4,8 +4,9 @@ PixelMapper::PixelMapper(OlaManager* ola, QObject *parent) :
     QObject(parent)
 {
     _ola = ola;
-    _image = new QImage(32, 32, QImage::Format_RGB32);
-    clearImage();
+    setSize(32,32);
+    //_image = new QImage(32, 32, QImage::Format_RGB32);
+    //clearImage();
 }
 
 void PixelMapper::clearImage(QColor color){

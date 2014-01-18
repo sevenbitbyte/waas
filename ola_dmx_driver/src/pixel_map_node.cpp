@@ -191,40 +191,54 @@ void publishGlobeTransform(const ros::TimerEvent& event){
 }
 
 void publishGlobeMarkers(){
+    //Collect pixel data
     QMap<int, QPair<QPoint, QRgb> > pixelData = _animationHost->getPixelMapper()->getGlobeData();
 
-    visualization_msgs::MarkerArrayPtr markerArray(new visualization_msgs::MarkerArray);
+    visualization_msgs::Marker globeMarker;
+    globeMarker.header.frame_id = "/globes_link";
+    globeMarker.ns = "pixel_map_node";
+    globeMarker.id = 0;
+    globeMarker.type = visualization_msgs::Marker::CUBE;
+    globeMarker.action = visualization_msgs::Marker::ADD;
+    globeMarker.pose.position.x = 0;
+    globeMarker.pose.position.y = 0;
+    globeMarker.pose.position.z = 0;
+    globeMarker.pose.orientation.x = 0.0;
+    globeMarker.pose.orientation.y = 0.0;
+    globeMarker.pose.orientation.z = 0.0;
+    globeMarker.pose.orientation.w = 1.0;
+    globeMarker.scale.x = 0.05;
+    globeMarker.scale.y = 0.05;
+    globeMarker.scale.z = 0.05;
+    /*globeMarker.color.a = 1.0;
+    globeMarker.color.r = qRed(pixelIter.value().second);
+    globeMarker.color.g = qGreen(pixelIter.value().second);
+    globeMarker.color.b = qBlue(pixelIter.value().second);*/
+
 
     QMap<int, QPair<QPoint, QRgb> >::iterator pixelIter = pixelData.begin();
-
-    int id=0;
     for(pixelIter; pixelIter != pixelData.end(); pixelIter++){
-        visualization_msgs::Marker globeMarker;
-        globeMarker.header.frame_id = "/globes_link";
-        globeMarker.ns = "pixel_map_node";
-        globeMarker.id = id;
-        globeMarker.type = visualization_msgs::Marker::CUBE;
-        globeMarker.action = visualization_msgs::Marker::ADD;
-        globeMarker.pose.position.x = pixelIter.value().first.x() * _globeSpacing.x;
-        globeMarker.pose.position.y = pixelIter.value().first.y() * _globeSpacing.y;
-        globeMarker.pose.position.z = 0;
-        globeMarker.pose.orientation.x = 0.0;
-        globeMarker.pose.orientation.y = 0.0;
-        globeMarker.pose.orientation.z = 0.0;
-        globeMarker.pose.orientation.w = 1.0;
-        globeMarker.scale.x = 0.05;
-        globeMarker.scale.y = 0.05;
-        globeMarker.scale.z = 0.05;
-        globeMarker.color.a = 1.0;
-        globeMarker.color.r = qRed(pixelIter.value().second);
-        globeMarker.color.g = qGreen(pixelIter.value().second);
-        globeMarker.color.b = qBlue(pixelIter.value().second);
+        //Load position
+        geometry_msgs::Point pt;
+        pt.x = pixelIter.value().first().x() * _globeSpacing.x;
+        pt.y = pixelIter.value().first().y() * _globeSpacing.y;
 
-        markerArray->markers.push_back(globeMarker);
+        globeMarker.points.push_back( pt );
 
-        id++;
+        //Load color
+        QColor qColor(pixelIter.value());
+        std_msgs::ColorRGBA c;
+        c.a = 1.0;
+        c.r = qColor.redF();
+        c.g = qColor.greenF();
+        c.b = qColor.blueF();
+
+        globeMarker.colors.push_back(c);
     }
 
+    //Publish
+    visualization_msgs::MarkerArrayPtr markerArray(new visualization_msgs::MarkerArray);
+    markerArray->markers.push_back(globeMarker);
     _lightVizPub.publish(markerArray);
 }
 

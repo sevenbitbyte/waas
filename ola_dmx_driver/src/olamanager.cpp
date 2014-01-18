@@ -14,7 +14,7 @@ OlaManager::OlaManager(QObject *parent) :
     _client = new ola::StreamingClient();
 
     // Setup the client, this connects to the server
-    if (_client->Setup()) {
+    if (!_client->Setup()) {
         qDebug() << "ERROR: OLA Setup failed" << endl;
         return;
     }
