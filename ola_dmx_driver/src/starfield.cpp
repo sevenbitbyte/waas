@@ -40,8 +40,8 @@ StarInfo::StarInfo(int id, BlobInfo* blob, ObjectType t, PositionMethod m) {
 void StarInfo::updatePosition () {
     velocity += force;
 
-    velocity.setX( min(velocity.x(), 0.3f) );
-    velocity.setY( min(velocity.y(), 0.3f) );
+    velocity.setX( fmin(velocity.x(), 0.3f) );
+    velocity.setY( fmin(velocity.y(), 0.3f) );
 
     position += velocity;
 }
