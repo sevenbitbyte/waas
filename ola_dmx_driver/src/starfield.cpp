@@ -48,9 +48,9 @@ bool StarInfo::operator==(const StarInfo& other){
 }
 
 Starfield::Starfield() {
-    _gravity = -0.1f;
+    _gravity = -0.01f;
     _minStars = 3;
-    _maxStars = 10;
+    _maxStars = 40;
     _starCount = 0;
     _emitProbability = 0.05f;
     //_bounds = bounds;
