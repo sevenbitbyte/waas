@@ -23,7 +23,7 @@ StarInfo::StarInfo(int id, BlobInfo* blob, ObjectType t, PositionMethod m) {
     position = blob->centroid;
     velocity.setValue(0,0,0);
     force.setValue(0,0,0);
-    mass = 0.5f;
+    mass = 1.0f;
     created = ros::Time::now();
     maxDuration = ros::Duration(0, 0);
 
@@ -56,7 +56,7 @@ bool StarInfo::operator==(const StarInfo& other){
 }
 
 Starfield::Starfield() {
-    _gravity = -0.01f;
+    _gravity = -0.001f;
     _minStars = 3;
     _maxStars = 40;
     _starCount = 0;

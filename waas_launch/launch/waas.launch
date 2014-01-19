@@ -1,0 +1,11 @@
+<launch>
+  <group>
+    <include file="$(find openni_launch)/launch/openni.launch">
+    </include>
+    <node name="point_downsample_node" pkg="point_downsample" type="point_downsample_node">
+    </node>
+    <node name="pixel_map_node" pkg="ola_dmx_driver" type="pixel_map_node">
+      <param name="pixel_map" value="~/Repos/waas/config/pixel_map_final.json"/>
+    </node>
+  </group>
+</launch>
