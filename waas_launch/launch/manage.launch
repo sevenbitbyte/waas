@@ -1,0 +1,9 @@
+<launch>
+  <group>
+    <node name="rviz" pkg="rviz" type="rviz">
+      <param name="display-config" value="~/Repos/waas/config/waas_default_view.rviz" />
+    </node>
+    <node name="waas_control" pkg="waas_control" type="waas_control">
+    </node>
+  </group>
+</launch>
