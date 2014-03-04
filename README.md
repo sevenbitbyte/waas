@@ -16,16 +16,20 @@ Modules
 * ola_dmx_driver - Translates image frames into relevant DMX commands, performs pixel mapping
 * waas_control - Controls all stages of point cloud processing, animation, and LED driving. Provides debug and setup utilities
 
-Runnig
+Running
 ---
 In seperate terminals
+```
+ olad						#Starts lighting console
+ roscore						#Star ROS master
+ roslaunch openni_launch openni.launch		#Kinect OpenNI interfaces
+ rosrun point_downsample point_downsample_node	#Downsample code
+ rosrun ola_dmx_driver pixel_map_node
+```
 
-olad						#Starts lighting console
-roscore						#Star ROS master
-roslaunch openni_launch openni.launch		#Kinect OpenNI interfaces
-rosrun point_downsample point_downsample_node	#Downsample code
-rosrun ola_dmx_driver pixel_map_node
-
-====Optional====
-rosrun waas_control waas_control		#To change parameters
-rosrun rviz rviz				#Visualization
+Optional
+====
+```
+ rosrun waas_control waas_control		#To change parameters
+ rosrun rviz rviz				#Visualization
+```
