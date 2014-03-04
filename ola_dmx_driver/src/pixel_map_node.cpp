@@ -115,7 +115,7 @@ int main(int argc, char** argv){
     reloadParameters();
 
 
-    _lightVizPub = _nhPtr->advertise<visualization_msgs::MarkerArray> ("/pixel_map_node/globes/markers", 1);
+    _lightVizPub = _nhPtr->advertise<visualization_msgs::Marker> ("/pixel_map_node/globes/markers", 1);
     _framePub = _nhPtr->advertise<sensor_msgs::Image> ("/pixel_map_node/animation/image", 1);
 
     _blobSub = _nhPtr->subscribe("/point_downsample/markers", 1, blobCallback);
@@ -252,9 +252,9 @@ void publishGlobeMarkers(){
     }
 
     //Publish
-    visualization_msgs::MarkerArrayPtr markerArray(new visualization_msgs::MarkerArray);
-    markerArray->markers.push_back(globeMarker);
-    _lightVizPub.publish(markerArray);
+    //visualization_msgs::MarkerArrayPtr markerArray(new visualization_msgs::MarkerArray);
+    //markerArray->markers.push_back(globeMarker);
+    _lightVizPub.publish(globeMarker);
     //std::cout << "publishGlobeMarkers() - done" << std::endl;
 }
 
