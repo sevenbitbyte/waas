@@ -205,7 +205,7 @@ void publishGlobeTransform(const ros::TimerEvent& event){
 }
 
 void publishGlobeMarkers(){
-    std::cout << "publishGlobeMarkers()" << std::endl;
+    //std::cout << "publishGlobeMarkers()" << std::endl;
     //Collect pixel data
     QMap<int, QPair<QPoint, QRgb> > pixelData = _animationHost->getPixelMapper()->getGlobeData();
 
@@ -213,7 +213,7 @@ void publishGlobeMarkers(){
     globeMarker.header.frame_id = "/globes_link";
     globeMarker.ns = "pixel_map_node";
     globeMarker.id = 0;
-    globeMarker.type = visualization_msgs::Marker::CUBE;
+    globeMarker.type = visualization_msgs::Marker::POINTS;
     globeMarker.action = visualization_msgs::Marker::ADD;
     globeMarker.pose.position.x = 0;
     globeMarker.pose.position.y = 0;
