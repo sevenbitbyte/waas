@@ -16,7 +16,6 @@ void FillFade::renderFrame(QImage* image, const RenderData& data) {
     double position = durationDelta / (double) duration.toNSec();
 
     QColor color = QColor::fromHsvF( qMin(1.0,position), 0.8, 0.3 );
-    qDebug() << color.hueF();
     image->fill(color);
 }
 

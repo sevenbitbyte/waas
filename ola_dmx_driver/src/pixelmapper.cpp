@@ -140,7 +140,7 @@ void PixelMapper::render(){
                 //Get pixel data
 
                 QRgb pixelData = QColor(Qt::black).rgb();
-                if(_image->width() > col && _image->height() < row) {
+                if(_image->width() > col && _image->height() > row) {
                     pixelData = _image->pixel(col, row);
                 }
 

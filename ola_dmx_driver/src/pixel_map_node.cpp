@@ -125,7 +125,7 @@ int main(int argc, char** argv){
 
 
     publishGlobeTransform(ros::TimerEvent());
-    qDebug() << "Published globe TF";
+    //qDebug() << "Published globe TF";
 
 
     ros::Timer transformTimer = _nhPtr->createTimer(ros::Duration(0.05), publishGlobeTransform);
@@ -141,7 +141,7 @@ int main(int argc, char** argv){
 
 
 void renderImage(const ros::TimerEvent& event){
-    std::cout << "renderImage()" << std::endl;
+    //std::cout << "renderImage()" << std::endl;
     _dataPtr->timestamp = ros::Time::now();
 
     _blobTracker->updateBlobs( _pendingBlobs );
@@ -154,7 +154,7 @@ void renderImage(const ros::TimerEvent& event){
         return;
     }
 
-    std::cout << "renderImage() - transmit" << std::endl;
+    //std::cout << "renderImage() - transmit" << std::endl;
     _animationHost->transmit();
 
     sensor_msgs::Image frame;
@@ -187,11 +187,11 @@ void renderImage(const ros::TimerEvent& event){
     }
 
     _framePub.publish( frame );
-    std::cout << "renderImage() - done" << std::endl;
+    //std::cout << "renderImage() - done" << std::endl;
 }
 
 void publishGlobeTransform(const ros::TimerEvent& event){
-    std::cout << "publishGlobeTransform()" << std::endl;
+    //std::cout << "publishGlobeTransform()" << std::endl;
     tf::Transform transform;
 
     transform.setOrigin( _globesOrigin );
@@ -201,7 +201,7 @@ void publishGlobeTransform(const ros::TimerEvent& event){
     if(_lightVizPub.getNumSubscribers() > 0){
         publishGlobeMarkers();
     }
-    std::cout << "publishGlobeTransform() - done" << std::endl;
+    //std::cout << "publishGlobeTransform() - done" << std::endl;
 }
 
 void publishGlobeMarkers(){
@@ -255,7 +255,7 @@ void publishGlobeMarkers(){
     visualization_msgs::MarkerArrayPtr markerArray(new visualization_msgs::MarkerArray);
     markerArray->markers.push_back(globeMarker);
     _lightVizPub.publish(markerArray);
-    std::cout << "publishGlobeMarkers() - done" << std::endl;
+    //std::cout << "publishGlobeMarkers() - done" << std::endl;
 }
 
 
@@ -274,7 +274,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
         return;
     }
 
-    std::cout << "blobCallback() with " << markers->markers.size() << std::endl;
+    //std::cout << "blobCallback() with " << markers->markers.size() << std::endl;
 
 
     for(unsigned int i=0; i<markers->markers.size(); i++){
