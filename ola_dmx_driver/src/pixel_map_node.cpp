@@ -150,7 +150,7 @@ void renderImage(const ros::TimerEvent& event){
     QImage* image = _animationHost->renderAll();
 
     if(image == NULL) {
-            std::cout << "renderImage() - null" << std::endl;
+        std::cout << "renderImage() - null" << std::endl;
         return;
     }
 
@@ -174,7 +174,7 @@ void renderImage(const ros::TimerEvent& event){
         for(int i=image->width()-1; i >= 0; i--){
 
             QRgb pixel = QColor(Qt::black).rgb();
-            if(image->width() > i && image->height() < j) {
+            if(image->width() > i && image->height() > j) {
                 pixel = image->pixel(i, j);
             }
 

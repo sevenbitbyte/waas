@@ -15,8 +15,8 @@ void FillFade::renderFrame(QImage* image, const RenderData& data) {
     double durationDelta = (double) (delta.toNSec() % duration.toNSec());
     double position = durationDelta / (double) duration.toNSec();
 
-    QColor color = QColor::fromHsvF( position, 0.8, 0.3 );
-
+    QColor color = QColor::fromHsvF( qMin(1.0,position), 0.8, 0.3 );
+    qDebug() << color.hueF();
     image->fill(color);
 }
 
@@ -87,7 +87,5 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
         fillPath.addEllipse(bounds);
 
         painter.fillPath(fillPath, fillBrush);
-
-
     }
 }
