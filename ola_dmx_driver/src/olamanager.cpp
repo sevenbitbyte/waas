@@ -73,7 +73,7 @@ ola::DmxBuffer* OlaManager::getBuffer(int universe){
 void OlaManager::setPixel(DmxAddress address, QColor color){
     ola::DmxBuffer* buffer = getBuffer(address.universe);
 
-    uint8_t colorData[3] = {color.red(), color.green(), color.blue()};
+    uint8_t colorData[3] = {(uint8_t)color.red(), (uint8_t)color.green(), (uint8_t)color.blue()};
 
     buffer->SetRange(address.offset, colorData, 3);
 }

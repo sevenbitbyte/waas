@@ -166,7 +166,7 @@ void Starfield::update(const RenderData& blobs) {
             while(emitMax > 0){
                 QMultiMap<StarInfo::ObjectType, StarInfo*>::iterator emitterIter = _starsByType.find(StarInfo::Emitter);
 
-                for(emitterIter; emitterIter != _starsByType.end() && emitMax > 0; emitterIter++){
+                for(; emitterIter != _starsByType.end() && emitMax > 0; emitterIter++){
                     StarInfo* s = emitterIter.value();
 
                     tfScalar range = (s->radius * ((double)(qrand()%100) / 100.0f)) + s->radius;
@@ -194,7 +194,7 @@ void Starfield::update(const RenderData& blobs) {
     removeLater.clear();
 
     while(physicsStars != _starsByMethod.end()) {
-        tfScalar dist2;
+        //tfScalar dist2;
         tfScalar newtons;
         StarInfo* star = physicsStars.value();
         if(star->method != StarInfo::Physics) { break; }

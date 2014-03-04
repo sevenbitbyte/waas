@@ -54,10 +54,6 @@ void BlobTracker::updateBlobs(QList<BlobInfo*> blobs) {
                   << _dataPtr->blobs.keys().count() << " clusters" <<  std::endl;
     }
 
-    if(blobs.size() > 0){
-        std::cout << "Got " << blobs.size() << " new blobs" << std::endl;
-    }
-
     QMultiMap<int,BlobInfo*>::iterator currentIter = _dataPtr->blobs.begin();
     while(currentIter != _dataPtr->blobs.end()){
         ros::Duration age = _dataPtr->timestamp - currentIter.value()->timestamp;
@@ -73,6 +69,9 @@ void BlobTracker::updateBlobs(QList<BlobInfo*> blobs) {
         }
     }
 
+    if(blobs.size() > 0){
+        std::cout << "Got " << blobs.size() << " new blobs" << std::endl;
+    }
 
     for(int i=0; i < blobs.count(); i++){
         insertBlob(blobs[i]);
@@ -126,7 +125,9 @@ Animation* AnimationHost::getLayer(int layer) {
 }
 
 
-
+void AnimationHost::transmit() {
+    _pixelMapper->render();
+}
 
 QImage* AnimationHost::renderAll() {
     if(_animations.count() > 0){
@@ -147,7 +148,7 @@ QImage* AnimationHost::renderLayer(int minLayer, int maxLayer) {
     RenderData* data = _dataPtr.data();
     QMap<int,Animation*>::iterator layerIter = _animations.begin();
 
-    for(layerIter; layerIter != _animations.end(); layerIter++) {
+    for(; layerIter != _animations.end(); layerIter++) {
 
         int layer = layerIter.key();
         if(layer < minLayer || layer > maxLayer) { continue; }

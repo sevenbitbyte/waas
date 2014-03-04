@@ -11,8 +11,9 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy sensor_msgs std_msgs tf mes
 # find_package(Boost REQUIRED COMPONENTS system)
 
 #include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
-set(ROS_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+set(CMAKE_BUILD_TYPE Debug)
+set(ROS_BUILD_TYPE Reslease)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -ggdb")
 #rosbuild_init()
 
 

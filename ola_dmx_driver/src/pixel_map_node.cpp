@@ -16,7 +16,7 @@
 
 
 #include <ola/DmxBuffer.h>
-#include <ola/OlaClient.h>
+//#include <ola/OlaClient.h>
 #include <ola/StreamingClient.h>
 
 #include <string>
@@ -95,16 +95,16 @@ int main(int argc, char** argv){
     _dataPtr = QSharedPointer<RenderData>( new RenderData );
     _dataPtr->timestamp = ros::Time::now();
     _blobTracker = new BlobTracker(_dataPtr);
-    _animationHost = new AnimationHost("", _dataPtr);
+    _animationHost = new AnimationHost(QString(pixelMapPath.c_str()), _dataPtr);
 
     Animation* fill = new FillFade();
     _animationHost->insertLayer(0, fill);
 
-    Animation* starsim = new StarSim();
-    _animationHost->insertLayer(1, starsim);
+    //Animation* starsim = new StarSim();
+    //_animationHost->insertLayer(1, starsim);
 
     Animation* starPath = new StarPath();
-    _animationHost->insertLayer(2, starPath);
+    _animationHost->insertLayer(1, starPath);
 
     _tfListener = new tf::TransformListener();
     tf::TransformBroadcaster _broadcaster;
@@ -113,8 +113,6 @@ int main(int argc, char** argv){
 
     //Load parameters
     reloadParameters();
-
-    publishGlobeTransform(ros::TimerEvent());
 
 
     _lightVizPub = _nhPtr->advertise<visualization_msgs::MarkerArray> ("/pixel_map_node/globes/markers", 1);
@@ -126,7 +124,8 @@ int main(int argc, char** argv){
     _refreshParamServ = _nhPtr->advertiseService("/pixel_map_node/refresh_params", refreshParams);
 
 
-    publishGlobeMarkers();
+    publishGlobeTransform(ros::TimerEvent());
+    qDebug() << "Published globe TF";
 
 
     ros::Timer transformTimer = _nhPtr->createTimer(ros::Duration(0.05), publishGlobeTransform);
@@ -142,7 +141,7 @@ int main(int argc, char** argv){
 
 
 void renderImage(const ros::TimerEvent& event){
-    //std::cout << "renderImage()" << std::endl;
+    std::cout << "renderImage()" << std::endl;
     _dataPtr->timestamp = ros::Time::now();
 
     _blobTracker->updateBlobs( _pendingBlobs );
@@ -151,8 +150,12 @@ void renderImage(const ros::TimerEvent& event){
     QImage* image = _animationHost->renderAll();
 
     if(image == NULL) {
+            std::cout << "renderImage() - null" << std::endl;
         return;
     }
+
+    std::cout << "renderImage() - transmit" << std::endl;
+    _animationHost->transmit();
 
     sensor_msgs::Image frame;
 
@@ -170,7 +173,11 @@ void renderImage(const ros::TimerEvent& event){
     for(int j=0; j<image->height(); j++){
         for(int i=image->width()-1; i >= 0; i--){
 
-            QRgb pixel = image->pixel(i, j);
+            QRgb pixel = QColor(Qt::black).rgb();
+            if(image->width() > i && image->height() < j) {
+                pixel = image->pixel(i, j);
+            }
+
 
             frame.data.push_back( qRed(pixel) );
             frame.data.push_back( qGreen(pixel) );
@@ -180,9 +187,11 @@ void renderImage(const ros::TimerEvent& event){
     }
 
     _framePub.publish( frame );
+    std::cout << "renderImage() - done" << std::endl;
 }
 
 void publishGlobeTransform(const ros::TimerEvent& event){
+    std::cout << "publishGlobeTransform()" << std::endl;
     tf::Transform transform;
 
     transform.setOrigin( _globesOrigin );
@@ -192,9 +201,11 @@ void publishGlobeTransform(const ros::TimerEvent& event){
     if(_lightVizPub.getNumSubscribers() > 0){
         publishGlobeMarkers();
     }
+    std::cout << "publishGlobeTransform() - done" << std::endl;
 }
 
 void publishGlobeMarkers(){
+    std::cout << "publishGlobeMarkers()" << std::endl;
     //Collect pixel data
     QMap<int, QPair<QPoint, QRgb> > pixelData = _animationHost->getPixelMapper()->getGlobeData();
 
@@ -221,7 +232,7 @@ void publishGlobeMarkers(){
 
 
     QMap<int, QPair<QPoint, QRgb> >::iterator pixelIter = pixelData.begin();
-    for(pixelIter; pixelIter != pixelData.end(); pixelIter++){
+    for(; pixelIter != pixelData.end(); pixelIter++){
         //Load position
         geometry_msgs::Point pt;
         pt.x = pixelIter.value().first.x() * _globeSpacing.x;
@@ -244,6 +255,7 @@ void publishGlobeMarkers(){
     visualization_msgs::MarkerArrayPtr markerArray(new visualization_msgs::MarkerArray);
     markerArray->markers.push_back(globeMarker);
     _lightVizPub.publish(markerArray);
+    std::cout << "publishGlobeMarkers() - done" << std::endl;
 }
 
 
@@ -265,7 +277,7 @@ void blobCallback(const visualization_msgs::MarkerArrayPtr& markers) {
     std::cout << "blobCallback() with " << markers->markers.size() << std::endl;
 
 
-    for(int i=0; i<markers->markers.size(); i++){
+    for(unsigned int i=0; i<markers->markers.size(); i++){
         visualization_msgs::Marker& marker = markers->markers.at(i);
 
         geometry_msgs::PoseStamped poseInput;

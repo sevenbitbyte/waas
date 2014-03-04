@@ -4,17 +4,16 @@ PixelMapper::PixelMapper(OlaManager* ola, QObject *parent) :
     QObject(parent)
 {
     _ola = ola;
+    _image = NULL;
     setSize(32,32);
 }
 
 void PixelMapper::clearImage(QColor color){
-    QPainter painter;
+    QPainter painter(_image);
     QRect bounds(0, 0, _image->width()-1, _image->height()-1);
     QBrush fillBrush( color );
 
-    painter.begin(_image);
     painter.fillRect(bounds, fillBrush);
-    painter.end();
     _imageDirty = true;
 
     _backgroundColor = QColor(Qt::black);
@@ -23,8 +22,11 @@ void PixelMapper::clearImage(QColor color){
 
 void PixelMapper::setSize(int width, int height){
     _imageLock.lock();
-    delete _image;
+    if(_image != NULL){
+        delete _image;
+    }
     _image = new QImage(width, height, QImage::Format_RGB32);
+    qDebug() << "PixelMapper::setSize() - Image dimensions (" << width << ", " << height << ")";
     _imageLock.unlock();
 
     clearImage();
@@ -62,8 +64,8 @@ void PixelMapper::updateImage(const sensor_msgs::ImagePtr& rosImage){
 
     _image->fill(_backgroundColor);
 
-    for(int y=0; y < rosImage->height; y++){
-        for(int x=0; x < rosImage->width; x++){
+    for(unsigned int y=0; y < rosImage->height; y++){
+        for(unsigned int x=0; x < rosImage->width; x++){
             int idx = (y*step) + (x*3);
 
             QColor c(   rosImage->data[idx],
@@ -94,7 +96,7 @@ QMap<int, QPair<QPoint, QRgb> > PixelMapper::getGlobeData() const {
 
     QMap<int, LedRun*>::const_iterator runIter =  _colToLedRun.begin();
 
-    for(runIter; runIter != _colToLedRun.end(); runIter++){
+    for(; runIter != _colToLedRun.end(); runIter++){
         LedRun* run = runIter.value();
 
         int x = runIter.key();
@@ -136,7 +138,11 @@ void PixelMapper::render(){
         if(!run->reverse){
             while(addr.isBefore(run->dmxEnd)){
                 //Get pixel data
-                QRgb pixelData = _image->pixel(col, row);
+
+                QRgb pixelData = QColor(Qt::black).rgb();
+                if(_image->width() > col && _image->height() < row) {
+                    pixelData = _image->pixel(col, row);
+                }
 
                 _ola->setPixel(addr, QColor(pixelData));
 
@@ -192,10 +198,10 @@ QJsonDocument PixelMapper::toJson(){
 }
 
 bool PixelMapper::fromFile(QString filePath){
-    if(filePath.isEmpty()){
+    /*if(filePath.isEmpty()){
         filePath = QDir::homePath();
         filePath.append("/.waas/pixel_map.json");
-    }
+    }*/
 
     QFile pixelMapFile(filePath);
 

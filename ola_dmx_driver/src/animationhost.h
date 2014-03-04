@@ -70,6 +70,7 @@ class AnimationHost {
         void removeLayer(int layer);
         Animation* getLayer(int layer);
 
+        void transmit();
         QImage* renderAll();
         QImage* renderLayer(int minLayer, int maxLayer=0);
 

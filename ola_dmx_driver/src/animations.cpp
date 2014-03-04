@@ -6,6 +6,10 @@ FillFade::FillFade() {
 }
 
 void FillFade::renderFrame(QImage* image, const RenderData& data) {
+    Q_ASSERT(image != NULL);
+    Q_ASSERT(image->width() > 0);
+    Q_ASSERT(image->height() > 0);
+
     ros::Duration delta = data.timestamp - firstRender;
 
     double durationDelta = (double) (delta.toNSec() % duration.toNSec());
@@ -22,9 +26,11 @@ StarPath::StarPath() {
 }
 
 void StarPath::renderFrame(QImage* image, const RenderData& data) {
+    Q_ASSERT(image != NULL);
+    Q_ASSERT(image->width() > 0);
+    Q_ASSERT(image->height() > 0);
 
-    QPainter painter;
-    painter.begin( image );
+    QPainter painter( image );
 
     foreach(BlobInfo* blob, data.blobs){
         ros::Duration delta = data.timestamp - blob->timestamp;
@@ -84,5 +90,4 @@ void StarPath::renderFrame(QImage* image, const RenderData& data) {
 
 
     }
-    painter.end();
 }
