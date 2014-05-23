@@ -33,12 +33,26 @@ class MainWindow : public QMainWindow
 
         void updateUi();
 
+        void setArrayRed(int i);
+        void setArrayGreen(int i);
+        void setArrayBlue(int i);
         void blackoutSlot();
         void whiteoutSlot();
-        void whiteoutItensitySlot(int value);
+        //void whiteoutItensitySlot(int value);
 
         void runStartSlot();
         void runEndSlot();
+
+        void setMoverStartAddr(int i);
+        void setMoverPan(int i);
+        void setMoverTilt(int i);
+        void setMoverZoom(int i);
+        void setMoverRed(int i);
+        void setMoverGreen(int i);
+        void setMoverBlue(int i);
+        void setMoverWhite(int i);
+        void setMoverIntensity(int i);
+        void updateMover();
 
         void savePixelMap();
         void loadPixelMap();
@@ -67,6 +81,19 @@ class MainWindow : public QMainWindow
         int _animationStage;
         int _frameCount;
         bool _forceRender;
+        DmxAddress _moverStart;
+
+        int _pan;
+        int _tilt;
+        int _intensity;
+        int _red;
+        int _green;
+        int _blue;
+        int _zoom;
+
+        int _moverWhite;
+        QColor _moverColor;
+        QColor _pixelColor;
 };
 
 #endif // MAINWINDOW_H

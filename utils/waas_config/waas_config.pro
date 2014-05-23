@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = waas_config
 TEMPLATE = app
 
-LIBS += -L /usr/local/lib -lola  -lolacommon -lprotobuf
+LIBS += -Llib -lprotobuf -L /usr/local/lib -lola  -lolacommon
 INCLUDEPATH += /usr/local/include
 
 SOURCES += main.cpp\

@@ -78,6 +78,21 @@ void OlaManager::setPixel(DmxAddress address, QColor color){
     buffer->SetRange(address.offset, colorData, 3);
 }
 
+void OlaManager::setPixel(int univ, int offset, QColor color) {
+    ola::DmxBuffer* buffer = getBuffer(univ);
+
+    uint8_t colorData[3] = {color.red(), color.green(), color.blue()};
+
+    buffer->SetRange(offset, colorData, 3);
+}
+
+void OlaManager::setValue(int univ, int offset, int value) {
+    ola::DmxBuffer* buffer = getBuffer(univ);
+
+    uint8_t colorData[1] = {value};
+
+    buffer->SetRange(offset, colorData, 1);
+}
 
 void OlaManager::updateBuffers(QMap<int,ola::DmxBuffer> data){
     QList<int> universes = data.keys();

@@ -40,15 +40,43 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->cursorAddrEdit, SIGNAL(textEdited(QString)), this, SLOT(updateCursorAddrSlot(QString)));
 
+    //Pan tilt
+    //connect(ui->st)
+    //ui->startAddrSpin
+    connect(ui->startAddrSpin, SIGNAL(valueChanged(int)), this, SLOT(setMoverStartAddr(int)));
+    connect(ui->panSlider, SIGNAL(valueChanged(int)), this, SLOT(setMoverPan(int)));
+    connect(ui->tiltSlider, SIGNAL(valueChanged(int)), this, SLOT(setMoverTilt(int)));
+    connect(ui->zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(setMoverZoom(int)));
+    connect(ui->redSpin, SIGNAL(valueChanged(int)), this, SLOT(setMoverRed(int)));
+    connect(ui->greenSpin, SIGNAL(valueChanged(int)), this, SLOT(setMoverGreen(int)));
+    connect(ui->blueSpin, SIGNAL(valueChanged(int)), this, SLOT(setMoverBlue(int)));
+    connect(ui->whiteSpin, SIGNAL(valueChanged(int)), this, SLOT(setMoverWhite(int)));
+    connect(ui->intensitySlide, SIGNAL(valueChanged(int)), this, SLOT(setMoverIntensity(int)));
+
 
     //Tools tab
     connect(ui->blackoutButton, SIGNAL(clicked()), this, SLOT(blackoutSlot()));
     connect(ui->whiteButton, SIGNAL(clicked()), this, SLOT(whiteoutSlot()));
-    connect(ui->intensitySlider, SIGNAL(valueChanged(int)), this, SLOT(whiteoutItensitySlot(int)));
+
+    connect(ui->arrayRed, SIGNAL(valueChanged(int)), this, SLOT(setArrayRed(int)));
+    connect(ui->arrayGreen, SIGNAL(valueChanged(int)), this, SLOT(setArrayGreen(int)));
+    connect(ui->arrayBlue, SIGNAL(valueChanged(int)), this, SLOT(setArrayBlue(int)));
+
+    //connect(ui->intensitySlider, SIGNAL(valueChanged(int)), this, SLOT(whiteoutItensitySlot(int)));
 
 
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(savePixelMap()));
     connect(ui->actionLoad, SIGNAL(triggered()), this, SLOT(loadPixelMap()));
+
+    _moverStart.universe = 1;
+    _moverStart.offset = 496;
+    _red = 0;
+    _green = 0;
+    _blue = 0;
+    _pan = 0;
+    _tilt = 0;
+    _intensity = 100;
+    _zoom = 0;
 
     _animateTimer->start();
     updateUi();
@@ -112,6 +140,85 @@ void MainWindow::animateDmxCursor(){
     _ola->sendBuffers();
 }
 
+void MainWindow::setMoverStartAddr(int i) {
+    _moverStart.universe = 1;
+    _moverStart.offset = i;
+
+    updateMover();
+}
+
+void MainWindow::setMoverPan(int i) {
+    _pan = i;
+    updateMover();
+}
+
+void MainWindow::setMoverTilt(int i) {
+    _tilt = i;
+    updateMover();
+}
+
+void MainWindow::setMoverZoom(int i){
+    _zoom = i;
+    updateMover();
+}
+
+void MainWindow::setMoverRed(int i) {
+    _moverColor.setRed(i);
+    updateMover();
+}
+
+void MainWindow::setMoverGreen(int i) {
+    _moverColor.setGreen(i);
+    updateMover();
+}
+
+void MainWindow::setMoverBlue(int i) {
+    _moverColor.setBlue(i);
+    updateMover();
+}
+
+void MainWindow::setMoverWhite(int i) {
+    _moverWhite = i;
+    updateMover();
+}
+
+void MainWindow::setMoverIntensity(int i) {
+    _intensity = i;
+    updateMover();
+}
+
+void MainWindow::updateMover(){
+    /*
+     *
+     *int _pan;
+        int _tilt;
+        int _intensity;
+        int _red;
+        int _green;
+        int blue;
+     *
+     */
+
+    int i=0;
+    while(i < _moverStart.offset){
+        //QColor c(_red, _green, _blue);
+
+        _ola->setPixel(_moverStart.universe, i, _pixelColor);
+        i+=3;
+    }
+
+    _ola->setValue(_moverStart.universe, _moverStart.offset, 255);
+    _ola->setValue(_moverStart.universe, _moverStart.offset + 1, _intensity);
+    _ola->setValue(_moverStart.universe, _moverStart.offset + 2, _pan);
+    _ola->setValue(_moverStart.universe, _moverStart.offset + 13, _zoom);
+    _ola->setValue(_moverStart.universe, _moverStart.offset + 4, _tilt);
+    _ola->setValue(_moverStart.universe, _moverStart.offset + 8, _moverColor.red());
+    _ola->setValue(_moverStart.universe, _moverStart.offset + 9, _moverColor.green());
+    _ola->setValue(_moverStart.universe, _moverStart.offset + 10, _moverColor.blue());
+    _ola->setValue(_moverStart.universe, _moverStart.offset + 11, _moverWhite);
+    _forceRender = true;
+}
+
 void MainWindow::cursorResetSlot(){
     _dmxCursor.universe = 1;
     _dmxCursor.offset = 0;
@@ -170,6 +277,21 @@ void MainWindow::updateCursorAddrSlot(QString text){
 }
 
 
+void MainWindow::setArrayRed(int i) {
+    _pixelColor.setRed(i);
+    updateMover();
+}
+
+void MainWindow::setArrayGreen(int i) {
+    _pixelColor.setGreen(i);
+    updateMover();
+}
+
+void MainWindow::setArrayBlue(int i) {
+    _pixelColor.setBlue(i);
+    updateMover();
+}
+
 void MainWindow::blackoutSlot(){
     _ola->blackout();
 }
@@ -178,9 +300,9 @@ void MainWindow::whiteoutSlot(){
     _ola->lightsOn(255);
 }
 
-void MainWindow::whiteoutItensitySlot(int value){
+/*void MainWindow::whiteoutItensitySlot(int value){
     _ola->lightsOn(value);
-}
+}*/
 
 
 void MainWindow::runStartSlot(){
