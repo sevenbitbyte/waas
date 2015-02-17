@@ -142,7 +142,7 @@ struct point3d {
 
 int main(int argc, char** argv){
     ros::init (argc, argv, "point_downsample_node");
-    _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle());
+    _nhPtr = ros::NodeHandlePtr(new ros::NodeHandle("~"));
     _tfListener = new tf::TransformListener();
     tf::TransformBroadcaster _broadcaster;
     _tfBroadcaster = &_broadcaster;
@@ -160,18 +160,18 @@ int main(int argc, char** argv){
     //Publishers
 
 
-    _pointsPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/points", 1);
-    _backgroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/background", 1);
-    _clustersPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/clusters", 1);
-    _foregroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("/point_downsample/foreground", 1);
+    _pointsPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("point_downsample/points", 1);
+    _backgroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("point_downsample/background", 1);
+    _clustersPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("point_downsample/clusters", 1);
+    _foregroundPub = _nhPtr->advertise<sensor_msgs::PointCloud2> ("point_downsample/foreground", 1);
 
     //Controls
-    _visualizerPub = _nhPtr->advertise<visualization_msgs::MarkerArray>( "/point_downsample/markers", 0 );
+    _visualizerPub = _nhPtr->advertise<visualization_msgs::MarkerArray>( "point_downsample/markers", 0 );
     /* TODO: There should be a bounds interactive marker for defining a ROI plus service set/getters */
 
 
     //Services
-    _refreshParamServ = _nhPtr->advertiseService("/point_downsample/refresh_params", refreshParams);
+    _refreshParamServ = _nhPtr->advertiseService("point_downsample/refresh_params", refreshParams);
 
 
     ros::Timer timer = _nhPtr->createTimer(ros::Duration(0.05), publishTransform);
@@ -375,26 +375,26 @@ void reloadParameters(){
     std::cout << "Reloading parameters ... ";
 
     //Update position
-    _kinectPosition.setX( loadRosParam("/waas/cloud/position/x") );
-    _kinectPosition.setY( loadRosParam("/waas/cloud/position/y") );
-    _kinectPosition.setZ( loadRosParam("/waas/cloud/position/z") );
+    _kinectPosition.setX( loadRosParam("waas/cloud/position/x") );
+    _kinectPosition.setY( loadRosParam("waas/cloud/position/y") );
+    _kinectPosition.setZ( loadRosParam("waas/cloud/position/z") );
 
     double deg2radCoef = M_PI / 180.0f;
 
     //Update orientation
     _kinectOrientation.setRPY(
-                                deg2radCoef * loadRosParam("/waas/cloud/orientation/roll"),
-                                deg2radCoef * loadRosParam("/waas/cloud/orientation/pitch"),
-                                deg2radCoef * loadRosParam("/waas/cloud/orientation/yaw")
+                                deg2radCoef * loadRosParam("waas/cloud/orientation/roll"),
+                                deg2radCoef * loadRosParam("waas/cloud/orientation/pitch"),
+                                deg2radCoef * loadRosParam("waas/cloud/orientation/yaw")
                               );
 
     //Update point cloud processing parameters
-    _cloudParams.downsample_leaf_size = loadRosParam("/waas/downsample_leaf_size", DEFAULT_downsample_leaf_size);
-    _cloudParams.octree_voxel_size = loadRosParam("/waas/octree_voxel_size", DEFAULT_octree_voxel_size);
-    _cloudParams.background_reset_threshold = loadRosParam("/waas/background_reset_threshold", DEFAULT_background_reset_threshold);
-    _cloudParams.cluster_join_distance = loadRosParam("/waas/cluster_join_distance", DEFAULT_cluster_join_distance);
-    _cloudParams.cluster_min_size = loadRosParam("/waas/cluster_min_size", DEFAULT_cluster_min_size);
-    _cloudParams.cluster_max_size = loadRosParam("/waas/cluster_max_size", DEFAULT_cluster_max_size);
+    _cloudParams.downsample_leaf_size = loadRosParam("waas/downsample_leaf_size", DEFAULT_downsample_leaf_size);
+    _cloudParams.octree_voxel_size = loadRosParam("waas/octree_voxel_size", DEFAULT_octree_voxel_size);
+    _cloudParams.background_reset_threshold = loadRosParam("waas/background_reset_threshold", DEFAULT_background_reset_threshold);
+    _cloudParams.cluster_join_distance = loadRosParam("waas/cluster_join_distance", DEFAULT_cluster_join_distance);
+    _cloudParams.cluster_min_size = loadRosParam("waas/cluster_min_size", DEFAULT_cluster_min_size);
+    _cloudParams.cluster_max_size = loadRosParam("waas/cluster_max_size", DEFAULT_cluster_max_size);
 
     std::cout << "done!" << std::endl;
 }
