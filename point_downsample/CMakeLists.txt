@@ -57,7 +57,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-   INCLUDE_DIRS include ${PCL_INCLUDE_DIRS}
+   INCLUDE_DIRS ${PCL_INCLUDE_DIRS}
 #  LIBRARIES point_downsample
   CATKIN_DEPENDS pcl_msgs roscpp sensor_msgs std_msgs tf
 #  DEPENDS system_lib
@@ -78,8 +78,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include
-  ${catkin_INCLUDE_DIRS}
+include_directories(${catkin_INCLUDE_DIRS}
   #${Qt5Core_INCLUDE_DIRS}
   #${Qt5Network_INCLUDE_DIRS}
   #${Qt5Sql_INCLUDE_DIRS}
